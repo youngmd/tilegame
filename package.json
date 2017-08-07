@@ -1,0 +1,12 @@
+{
+  "name": "simple-angular",
+  "version": "1.0.0",
+  "description": "Simple angular Demos.",
+  "main": "server.js",
+  "author": "Michael Young",
+  "dependencies": {
+    "body-parser": "^1.4.3",
+    "express": "^4.13.4",
+    "method-override": "^2.1.3"
+  }
+}

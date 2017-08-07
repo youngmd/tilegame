@@ -1,0 +1,41 @@
+<!doctype html>
+
+<!--<html ng-app="myapp">-->
+<html ng-app>
+<head>
+
+	<title>Simple Node/Angular App</title>
+
+	<!-- SCROLLS -->
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"><!-- load bootstrap -->
+
+	<!-- SPELLS -->
+	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.min.js"></script><!-- load angular -->
+	<!--<script src="/public/js/helloworld.js"></script>-->
+
+</head>
+<!-- SET THE CONTROLLER -->
+<!--<body ng-controller="mainController">-->
+<body>
+	<div class="container">
+
+		<h3>Angular 2-way binding</h3>
+		<br>
+		<div id="todo-form" class="row">
+			<div class="col-sm-8 col-sm-offset-2 text-center">
+				<form>
+					<div class="form-group">
+
+						<input type="text" class="form-control input-lg text-center" placeholder="World!" ng-model="formData.text">
+					</div>
+
+					Hello {{formData.text}}
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+
+</body>
+</html>
