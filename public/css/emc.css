@@ -1,0 +1,6 @@
+.big-checkbox {width: 30px; height: 30px;}
+
+.modal-body {
+    height: 250px !important;
+    overflow-y: auto !important;
+}

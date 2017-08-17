@@ -1,0 +1,77 @@
+<navbar title="{{title}}" active="search" loggedin="true" username="{{username}}"></navbar>
+
+<div class="header">
+    <div class="container">
+        <h2>Search</h2>
+    </div>
+</div>
+
+<div class="container">
+
+    <form class="form-horizontal">
+        <fieldset>
+
+
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="exptime">Exposure Date</label>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" datepicker-popup="{{dateformat}}" ng-model="formData.obsdate" is-open="opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" />
+                        <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" ng-click="dateopen($event)">
+                                    <i class="fa fa-fw fa-calendar"></i></button>
+                            </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button class="btn btn-info" ng-click="getexposures()">Get Exposures</button>
+                    <a type="button" ng-show="selected > 0" class="btn btn-success" ng-click="download()"><i class="fa fa-fw fa-download"></i> Download Selected</a>
+                    <a type="button" ng-show="selected > 0" class="btn btn-success"><i class="fa fa-fw fa-refresh"></i> Reprocess Selected</a>
+
+                </div>
+            </div>
+
+
+
+        </fieldset>
+
+
+    </form>
+
+    <span ng-show="exposures.length">{{exposures.length}} results</span>
+
+    <table class="table table-bordered table-hover table-condensed" ng-show="exposures.length">
+        <thead>
+        <th><input type="checkbox" class="input" ng-model="selectall" ng-click="toggleselectall()"></th>
+        <th>Status</th>
+        <th>ID</th>
+        <th>Expsoure Time</th>
+        <th>Timestamp (UTC)</th>
+        <th>Number of Exposures</th>
+        <th>Filesize</th>
+        <th>Metadata</th>
+        </thead>
+        <tr ng-repeat="exposure in exposures" ng-click="toggleselectexposure($index)" ng-class="{active: exposure.selected}">
+            <!--<span ng-show="person.gender == 'boy'"><i class="fa fa-fw fa-user" style="color:lightblue"></i></span>-->
+            <!--<span ng-show="person.gender == 'girl'"><i class="fa fa-fw fa-user" style="color:pink"></i></span>-->
+            <td><input type="checkbox" class="input" ng-model="exposure.selected" ng-change="toggleselectexposure($index)"></td>
+            <td>
+                <i class="fa fa-fw fa-hdd-o text-success"></i>
+                <i class="fa fa-fw fa-archive text-success"></i>
+                <i class="fa fa-fw fa-refresh text-info"></i>
+            </td>
+            <td>{{exposure.exp_id}}</td>
+            <td>{{exposure.infofile[0]['Exposure Time in Seconds']}}</td>
+            <td>{{exposure.infofile[0]['Timestamp (seconds since Epoch)'] * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+            <td>{{exposure.infofile[0]['Total Frames in Summed Image']}}</td>
+            <td>{{expsoure.filesize}}</td>
+            <td><i class="fa fa-fw fa-file text-info" ng-click="infodump($index)"></i></td>
+        </tr>
+    </table>
+    </ul>
+
+
+</div>

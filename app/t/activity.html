@@ -1,0 +1,47 @@
+<navbar title="{{title}}" active="activity"></navbar>
+<div class="container">
+
+
+    <li>Filewatcher is <span class="text-info">waiting</span></li>
+    <li>Archiver is <span class="text-success">active</span> </li>
+    <li>Thawer is <span class="text-success">active</span> </li>
+    <li>Purger is <span class="text-info">waiting</span> </li>
+
+    <h4 class="text-success">Completed Processes <small>last 24 hours</small></h4>
+
+    <label>Archiving 237 Final Exposures</label>
+    <div class="progress">
+        <div class="progress-bar progress-bar-success" style="width: 100%">
+        </div>
+    </div>
+
+    <h4 class="text-info">Active Processes</h4>
+
+    <label>Archiving 237 Raw Exposures</label>
+    <div class="progress progress-striped active">
+        <div class="progress-bar progress-bar-info" style="width: 40%">
+            58/237
+        </div>
+    </div>
+
+
+    <label>Thawing 17 Final Exposures</label>
+    <div class="progress progress-striped active ">
+        <div class="progress-bar progress-bar-info" style="width: 5%">
+            1/17
+        </div>
+    </div>
+
+    <h4 class="text-warning">Pending Processes</h4>
+
+    <label>Thawing 12 Final Exposures</label>
+    <div class="progress">
+        <div class="progress-bar progress-bar-info" style="width: 0%"></div>
+    </div>
+
+    <label>Purge Expired Raw Exposures (repeats daily)</label>
+    <div class="progress">
+        <div class="progress-bar progress-bar-info" style="width: 0%"></div>
+    </div>
+
+</div>
