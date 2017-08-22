@@ -1,7 +1,7 @@
 {
-  "name": "simple-angular",
+  "name": "EMCenterArchive",
   "version": "1.0.0",
-  "description": "Simple angular Demos.",
+  "description": "Portal for new EMCenter Data",
   "main": "server.js",
   "author": "Michael Young",
   "dependencies": {

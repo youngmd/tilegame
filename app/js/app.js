@@ -8,6 +8,7 @@ var myapp = angular.module('myapp', [
     'ngCookies',
     'toaster',
     'angular-loading-bar',
+    'angularFileUpload',
     'angular-jwt',
     'ui.bootstrap',
     'ui.gravatar',
@@ -24,6 +25,17 @@ myapp.filter('bytes', function() {
     }
 });
 
+myapp.filter('limitObjectTo', function() {
+    return function(obj, limit) {
+        var newObj = {}, i = 0, p;
+        for (p in obj) {
+            newObj[p] = obj[p];
+            if (++i === limit) break;
+        }
+        return newObj;
+    };
+});
+
 myapp.directive('navbar', function() {
     return {
         restrict: "E",
@@ -35,6 +47,27 @@ myapp.directive('navbar', function() {
             loggedin: '@'
         },
         templateUrl: 't/navbar.html'
+    };
+});
+
+myapp.directive('modalDialog', function() {
+    return {
+        restrict: 'E',
+        replace: true,
+        transclude: true,
+        link: function(scope) {
+            scope.cancel = function() {
+                scope.$dismiss('cancel');
+            };
+        },
+        template:
+        "<div>" +
+        "<div class='modal-header'>" +
+        "<h3 ng-bind='dialogTitle'></h3>" +
+        "<div ng-click='cancel()'>X</div>" +
+        "</div>" +
+        "<div class='modal-body' ng-transclude></div>" +
+        "</div>"
     };
 });
 
@@ -60,6 +93,10 @@ myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
             templateUrl: 't/signin.html',
             controller: 'SigninController'
         })
+        .when('/upload', {
+            templateUrl: 't/upload.html',
+            controller: 'UploadController'
+        })
         .otherwise({
             redirectTo: '/signin'
         });
@@ -78,3 +115,4 @@ myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
         }
     });
 }]);
+

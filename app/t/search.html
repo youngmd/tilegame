@@ -13,7 +13,7 @@
 
 
             <div class="form-group">
-                <label class="col-md-4 control-label" for="exptime">Exposure Date</label>
+                <label class="col-md-4 control-label">Exposure Date</label>
                 <div class="col-md-4">
                     <div class="input-group">
                         <input type="text" class="form-control" datepicker-popup="{{dateformat}}" ng-model="formData.obsdate" is-open="opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" />
@@ -67,7 +67,7 @@
             <td>{{exposure.infofile[0]['Exposure Time in Seconds']}}</td>
             <td>{{exposure.infofile[0]['Timestamp (seconds since Epoch)'] * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</td>
             <td>{{exposure.infofile[0]['Total Frames in Summed Image']}}</td>
-            <td>{{expsoure.filesize}}</td>
+            <td>{{exposure.size | bytes}}</td>
             <td><i class="fa fa-fw fa-file text-info" ng-click="infodump($index)"></i></td>
         </tr>
     </table>

@@ -9,18 +9,37 @@ var clone = require('clone');
 var config = require('./config');
 var logger = new winston.Logger(config.logger.winston);
 
+var multer  = require('multer')
+var storage = multer.diskStorage({ //multers disk storage settings
+    destination: function (req, file, cb) {
+        cb(null, './uploads/')
+    },
+    filename: function (req, file, cb) {
+        var datetimestamp = Date.now();
+        cb(null, file.fieldname + '-' + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length -1])
+    }
+});
+var upload = multer({ //multer settings
+    storage: storage
+}).single('file');
+
+var csv = require("fast-csv"),
+    fs = require("fs"),
+    path = require("path");
+
+
+
 function issue_jwt(user, cb) {
     var claim = {
         iss: config.auth.iss,
         exp: (Date.now() + config.auth.ttl)/1000,
         //"iat": (Date.now())/1000, //this gets set automatically
-
         profile: {
             username: user.username,
         },
     };
-    console.log( jsonwt.sign(claim, config.auth.private_key, config.auth.sign_opt));
-    cb(null, jsonwt.sign(claim, config.auth.private_key, config.auth.sign_opt));
+    console.log( jsonwt.sign(claim, config.auth.secret));
+    cb(null, jsonwt.sign(claim, config.auth.secret));
 
 }
 
@@ -50,11 +69,35 @@ module.exports = function (app) {
     app.use('/t', express.static(path.join(__dirname, 't')));
     app.use('/images', express.static(path.join(__dirname, 'images')));
 
+
+    /** API path that will upload the files */
+    app.post('/upload', function(req, res) {
+        upload(req,res,function(err){
+            if(err){
+                res.json({error_code:1,err_desc:err});
+                return;
+            }
+            console.log(req.file.filename);
+            var rows = []
+            var stream = fs.createReadStream(path.resolve("./uploads", req.file.filename))
+                .pipe(csv.parse({headers: true}))
+                .on("data", function(data){
+                    rows.push(data)
+                })
+                .on("end", function(){
+                    res.json({error_code:0,err_desc:null,data:rows});
+                });
+
+
+            //res.json({error_code:0,err_desc:null});
+        })
+    });
+
     app.get('/iucascb.html', function (req, res) {
         res.sendFile(__dirname + '/iucascb.html'); // load the file to handle iucas redirect
     });
 
-    app.get('/verify', jwt({secret: "abcdefg", credentialsRequired: false}), function(req, res, next) {
+    app.get('/verify', jwt({secret: "shhhhhhared-secret", credentialsRequired: false}), function(req, res, next) {
         var ticket = req.query.casticket;
 
         //guess casurl using referer - TODO - should I use cookie and pass it from the UI method begin_iucas() instead?

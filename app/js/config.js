@@ -9,12 +9,12 @@ angular.module('app.config', [])
 
     title: 'EMCenter Data Archive',
 
-    default_redirect_url: '/#!/search',  //don't start with #
+    default_redirect_url: '/emca/#!/search',  //don't start with #
 
     jwt_id: 'jwt',
     iucas_url: 'https://cas.iu.edu/cas/login',
 
-    jwt_whitelist: ['dev1.soichi.us'], //list of domains to allow jwtInterceptor to send jwt to
+    jwt_whitelist: ['youngmd6.sca.iu.edu'], //list of domains to allow jwtInterceptor to send jwt to
 
     //show/hide various login options
     show: {

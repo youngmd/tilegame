@@ -76,7 +76,7 @@ function issue_jwt(user, cb) {
 }
 
 //XHR get only
-router.get('/verify', jwt({secret: "abcdefg", credentialsRequired: false}), function(req, res, next) {
+router.get('/verify', jwt({secret: 'shhhhhhared-secret', credentialsRequired: false}), function(req, res, next) {
     console.log("Got into here");
     var ticket = req.query.casticket;
 

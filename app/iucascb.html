@@ -45,21 +45,20 @@
     app.run(function($http, appconf, $cookies, $location) {
         console.log("iucascb::app.run ref:"+document.referrer);
         var casticket = getParameterByName('casticket');
-        $http.get('/verify?casticket='+casticket)
+        $http.get('/emca/verify?casticket='+casticket)
         .then(function(res) {
             console.dir(res.data.jwt);
             localStorage.setItem(appconf.jwt_id, res.data.jwt);
             var redirect = sessionStorage.getItem('auth_redirect');
             sessionStorage.removeItem('auth_redirect');
             console.log("done.. redirecting "+redirect);
-            if(redirect) window.location = redirect; 
-            else window.location = appconf.default_redirect_url;
+            window.location = appconf.default_redirect_url;
         }, function(res) {
             console.dir(res);
             if(res.data && res.data.path) {
-                window.location = "./#!"+res.data.path;
+                window.location = "./emca/#!"+res.data.path;
             } else {
-                window.location = "./";
+                window.location = "./emca";
             }
         }); 
     });

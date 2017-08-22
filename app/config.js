@@ -17,15 +17,12 @@ exports.auth = {
     },
 
     //isser to use for generated jwt token
-    iss: "https://localhost:8080",
+    iss: "https://youngmd6.sca.iu.edu/emca",
     //ttl for jwt
     ttl: 24*3600*1000, //1 day
 
-    public_key: fs.readFileSync(__dirname+'/auth.pub'),
-    private_key: fs.readFileSync(__dirname+'/auth.key'),
-
-    //option for jwt.sign
-    sign_opt: {algorithm: 'RS256'},
+    //TODO - fix this
+    secret: 'shhhhhhared-secret'
 
     //allow_signup: false, //prevent user from signing in (set false if not using local auth)
 };
