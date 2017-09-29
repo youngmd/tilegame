@@ -45,7 +45,7 @@
     app.run(function($http, appconf, $cookies, $location) {
         console.log("iucascb::app.run ref:"+document.referrer);
         var casticket = getParameterByName('casticket');
-        $http.get('/emca/verify?casticket='+casticket)
+        $http.get('/imagex/verify?casticket='+casticket)
         .then(function(res) {
             console.dir(res.data.jwt);
             localStorage.setItem(appconf.jwt_id, res.data.jwt);

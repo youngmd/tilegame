@@ -43,6 +43,17 @@ function issue_jwt(user, cb) {
 
 }
 
+function imagex_jwt(paths, cb){
+    var claim = {
+        "scopes": {"imagex": paths},
+        "aud": "spitz.sca.iu.edu",
+        "iat": Date.now(),
+        "exp": (Date.now() + config.auth.ttl)/1000
+    };
+
+    console.log( jsonwt.sign(claim, config.auth.imagex_secret, { algorithm: 'RS256'}));
+    cb( jsonwt.sign(claim, config.auth.imagex_secret, { algorithm: 'RS256'}));
+}
 
 module.exports = function (app) {
 
@@ -96,6 +107,22 @@ module.exports = function (app) {
     app.get('/iucascb.html', function (req, res) {
         res.sendFile(__dirname + '/iucascb.html'); // load the file to handle iucas redirect
     });
+
+
+    app.get('/token/:exptype/:eid', function (req, res) {
+        var paths = ['/tiles/'+req.params.exptype+'/'+req.params.eid];
+        imagex_jwt(paths, function(token){
+            res.json(token);
+        })
+    });
+
+    app.get('/tokennew/:eid', function (req, res) {
+        var paths = ['/'+req.params.eid];
+        imagex_jwt(paths, function(token){
+            res.json(token);
+        })
+    });
+
 
     app.get('/verify', jwt({secret: "shhhhhhared-secret", credentialsRequired: false}), function(req, res, next) {
         var ticket = req.query.casticket;

@@ -3,6 +3,7 @@
  */
 var winston = require('winston');
 var fs = require('fs');
+var imagex = fs.readFileSync(__dirname + '/imagex.key')
 
 exports.auth = {
     //default user object when registered
@@ -22,7 +23,8 @@ exports.auth = {
     ttl: 24*3600*1000, //1 day
 
     //TODO - fix this
-    secret: 'shhhhhhared-secret'
+    secret: 'shhhhhhared-secret',
+    imagex_secret : imagex
 
     //allow_signup: false, //prevent user from signing in (set false if not using local auth)
 };
