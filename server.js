@@ -11,7 +11,7 @@ var jwt = require('jsonwebtoken');
 var fs = require('fs');
 var request = require('request');
 var cert_priv = fs.readFileSync('app/imagex.key');
-var port = process.env.PORT || 8082; 				// set the port	// load the database config
+var port = process.env.PORT || 8080; 				// set the port	// load the database config
 var methodOverride = require('method-override');
 
 // configuration ===============================================================
@@ -21,8 +21,8 @@ app.use(bodyParser.urlencoded({'extended': 'true'})); // parse application/x-www
 app.use(bodyParser.json()); // parse application/json
 app.use(bodyParser.json({type: 'application/vnd.api+json'})); // parse application/vnd.api+json as json
 app.use(methodOverride('X-HTTP-Method-Override')); // override with the X-HTTP-Method-Override header in the request
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(bodyParser.json({limit: '100mb'}));
+app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
 
 
 app.use('/api', function(req, res) {
@@ -49,4 +49,4 @@ require('./sockets/base')(io);
 // listen (start app with node server.js) ======================================
 server.listen(port);
 
-console.log("ImageX Test Instance listening on port " + port);
+console.log("ImageX UI Demonstrator listening on port " + port);
