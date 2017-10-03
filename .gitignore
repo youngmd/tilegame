@@ -6,6 +6,9 @@ lib-cov
 *.out
 *.pid
 *.gz
+*.pub
+*.key
+*.fits
 
 pids
 logs
