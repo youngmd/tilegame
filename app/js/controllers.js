@@ -4,7 +4,7 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
 
     $scope.username = jwtHelper.decodeToken(localStorage.getItem(appconf.jwt_id)).profile.username;
 
-    $scope.title = "EMCenter Data Archive";
+    $scope.title = "ImageX";
     $scope.formData = {};
     $scope.exposures = [];
     $scope.searchText = "";
@@ -750,7 +750,6 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
 
 myapp.controller('SigninController', function ($scope, $http, toaster, appconf) {
     $scope.appconf = appconf;
-    $scope.title = "EMCenter Data Archive";
     $scope.username = "";
     $scope.requestAccess = function() {
         if ($scope.username == "") {
@@ -760,21 +759,10 @@ myapp.controller('SigninController', function ($scope, $http, toaster, appconf) 
         }
     }
 
-    $scope.begin_iucas = function() {
-        //I can't pass # for callback somehow (I don't know how to make it work, or iucas removes it)
-        //so let's let another html page handle the callback, do the token validation through iucas and generate the jwt
-        //and either redirect to profile page (default) or force user to setup user/pass if it's brand new user
-        var casurl = window.location.origin+window.location.pathname+'iucascb.html';
-        console.log(casurl);
-        window.location = $scope.appconf.iucas_url+'?cassvc=IU&casurl='+casurl;
-    }
-
-
-
 });
 
 myapp.controller('UploadController', function ($scope, $http, FileUploader, toaster) {
-    $scope.title = "EMCenter Data Archive";
+    $scope.title = "ImageX";
 
     $scope.rows = [];
     var uploader = $scope.uploader = new FileUploader({
@@ -782,39 +770,29 @@ myapp.controller('UploadController', function ($scope, $http, FileUploader, toas
     });
 
     // FILTERS
-    //
-    // // a sync filter
-    // uploader.filters.push({
-    //     name: 'csvFilter',
-    //     fn: function(item /*{File|FileLikeObject}*/, options) {
-    //         console.log('syncFilter');
-    //         return this.queue.length < 10;
-    //     }
-    // });
 
     uploader.filters.push({
-        name: 'csvFilter',
+        name: 'syncFilter',
         fn: function(item /*{File|FileLikeObject}*/, options) {
-            console.dir(item);
-            var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
-            return '|csv|tsv|text|xls|vnd.ms-excel|'.indexOf(type) !== -1;
+            console.log('syncFilter');
+            return this.queue.length < 10;
         }
     });
-    //
-    // // an async filter
-    // uploader.filters.push({
-    //     name: 'asyncFilter',
-    //     fn: function(item /*{File|FileLikeObject}*/, options, deferred) {
-    //         console.log('asyncFilter');
-    //         setTimeout(deferred.resolve, 1e3);
-    //     }
-    // });
+
+    // an async filter
+    uploader.filters.push({
+        name: 'asyncFilter',
+        fn: function(item /*{File|FileLikeObject}*/, options, deferred) {
+            console.log('asyncFilter');
+            setTimeout(deferred.resolve, 1e3);
+        }
+    });
 
     // CALLBACKS
 
     uploader.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
         console.info('onWhenAddingFileFailed', item, filter, options);
-        toaster.pop('error','Invalid Filetype','Please add a valid csv or tsv file')
+        toaster.pop('error','Invalid Filetype','Please add a valid FITS or .fz compressed file')
     };
     uploader.onAfterAddingFile = function(fileItem) {
         console.info('onAfterAddingFile', fileItem);

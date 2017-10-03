@@ -1,31 +1,79 @@
-<navbar title="{{title}}" active="signin"></navbar>
-<div class="container">
-    <div class="jumbotron">
-    <h1>Sign in</h1>
 
-        <div class="form-group">
-            <button type="button" class="btn btn-danger btn-md" ng-click="begin_iucas()">
-                <img src="images/trident.png"/>&nbsp;&nbsp;&nbsp;Login with IU Account
-            </button>
+<style>
 
-            <button data-toggle="collapse" href="#local-reg" class="btn btn-default btn-md" role="button">Request Access</button>
-        </div>
+    .outer-wrapper {
+        background: url(images/Crab_Nebula.jpg) no-repeat center center fixed;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+    }
+
+    html, body { height:100%; }
+
+    .outer-wrapper {
+        display: table;
+        width: 100%;
+        height: 100%;
+    }
+
+    .inner-wrapper {
+        display:table-cell;
+        vertical-align:middle;
+        padding:15px;
+    }
+
+    .panel{
+        background: transparent;
+    }
+    .panel .panel-heading{
+        background: rgba(0, 121, 161, 0.5);
+    }
 
 
-        <div class="col-md-6">
-        <div id="local-reg" class="collapse" class="col-md-3 col-md-offset-1">
-            <form>
-                <div class="form-group">
-                    <p></p>
-                    <label>IU Username:</label>
-                    <input class="form-control" type="text" name="username" ng-model="username"/>
+    .panel .panel-body{
+        background: #fff;
+    }
+
+
+</style>
+<section id="loginform" class="outer-wrapper">
+<div class="inner-wrapper">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3 col-xs-8 col-xs-offset-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                <h3 class="text-center login-title">ImageX Demonstrator</h3>
                 </div>
-                <div>
-                    <input type="submit" class="btn btn-primary btn-sm" value="Submit" ng-click="requestAccess()"/>
-                </div>
-            </form>
-        </div>
-        </div>
+                <div class="panel-body">
+                <form class="form-signin">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="fa fa-fw fa-envelope"></i></span>
+                            <input type="text" class="form-control" id="username" ng-model="username" placeholder="email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="fa fa-fw fa-unlock-alt"></i></span>
+                            <input type="password" class="form-control" id="password" ng-model="password" placeholder="password">
+                        </div>
+                    </div>
+                    <br>
+                    <div class="btn-group btn-group-justified">
+                        <a href="#" class="btn btn-primary" ng-click="login()"><i class="fa fa-sign-in"></i> Login</a>
+                        <a href="#" class="btn btn-info" ng-click="guestlogin()"><i class="fa fa-user-o"></i> Guest Login</a>
+                    </div>
 
+                </form>
+                </div>
+
+            </div>
+
+        </div>
     </div>
 </div>
+</div>
+</section>
+

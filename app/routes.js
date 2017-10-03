@@ -23,8 +23,7 @@ var upload = multer({ //multer settings
     storage: storage
 }).single('file');
 
-var csv = require("fast-csv"),
-    fs = require("fs"),
+var fs = require("fs"),
     path = require("path");
 
 
@@ -58,24 +57,8 @@ function imagex_jwt(paths, cb){
 module.exports = function (app) {
 
 
-    // // application -------------------------------------------------------------
-    // app.get('/search', function (req, res) {
-    //     res.sendFile(__dirname + '/html/emcenter/index.html'); // load the single view file (angular will handle the page changes on the front-end)
-    // });
-    //
-    // app.get('/download', function (req, res) {
-    //     res.sendFile(__dirname + '/html/emcenter/download.html'); // load the single view file (angular will handle the page changes on the front-end)
-    // });
-    //
-    // app.get('/activity', function (req, res) {
-    //     res.sendFile(__dirname + '/html/emcenter/activity.html'); // load the single view file (angular will handle the page changes on the front-end)
-    // });
-    //
-    // app.get('/navbar', function (req, res) {
-    //     res.sendFile(__dirname + '/html/navbar.html'); // load the single view file (angular will handle the page changes on the front-end)
-    // });
 
-    app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
+    app.use('/node_modules', express.static(path.join(__dirname, '/../node_modules')));
     app.use('/js', express.static(path.join(__dirname, 'js')));
     app.use('/t', express.static(path.join(__dirname, 't')));
     app.use('/images', express.static(path.join(__dirname, 'images')));
@@ -89,18 +72,7 @@ module.exports = function (app) {
                 return;
             }
             console.log(req.file.filename);
-            var rows = []
-            var stream = fs.createReadStream(path.resolve("./uploads", req.file.filename))
-                .pipe(csv.parse({headers: true}))
-                .on("data", function(data){
-                    rows.push(data)
-                })
-                .on("end", function(){
-                    res.json({error_code:0,err_desc:null,data:rows});
-                });
-
-
-            //res.json({error_code:0,err_desc:null});
+            res.json({error_code:0,err_desc:null});
         })
     });
 
