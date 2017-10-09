@@ -7,14 +7,16 @@
 angular.module('app.config', [])
 .constant('appconf', {
 
-    title: 'EMCenter Data Archive',
+    title: 'ImageX UI',
 
-    default_redirect_url: '/emca/#!/search',  //don't start with #
+    default_redirect_url: '/imagex/#!/signin',  //don't start with #
 
-    jwt_id: 'jwt',
+    auth_token: 'auth_token',
+    user: 'ix_user',
     iucas_url: 'https://cas.iu.edu/cas/login',
 
-    jwt_whitelist: ['youngmd6.sca.iu.edu'], //list of domains to allow jwtInterceptor to send jwt to
+    api_url: '/imagex-api',
+    jwt_whitelist: ['imagex.sca.iu.edu'], //list of domains to allow jwtInterceptor to send jwt to
 
     //show/hide various login options
     show: {
