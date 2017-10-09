@@ -5,35 +5,36 @@
 //contrib
 
 angular.module('app.config', [])
-.constant('appconf', {
+    .constant('appconf', {
 
-    title: 'EMCenter Data Archive',
+        title: 'ImageX UI',
 
-    default_redirect_url: '/emca/#!/search',  //don't start with #
+        default_redirect_url: '/imagex/#!/signin',  //don't start with #
 
-    jwt_id: 'jwt',
-    iucas_url: 'https://cas.iu.edu/cas/login',
+        jwt_id: 'jwt',
+        iucas_url: 'https://cas.iu.edu/cas/login',
 
-    jwt_whitelist: ['youngmd6.sca.iu.edu'], //list of domains to allow jwtInterceptor to send jwt to
+        api_url: 'http://172.18.0.3:3001/imagex-api/',
+        jwt_whitelist: ['imagex.sca.iu.edu'], //list of domains to allow jwtInterceptor to send jwt to
 
-    //show/hide various login options
-    show: {
-        //local and ldap shouldn't be used at the same time
-        local: false,
-        //ldap: true,
+        //show/hide various login options
+        show: {
+            //local and ldap shouldn't be used at the same time
+            local: false,
+            //ldap: true,
 
-        x509: false,
-        google: false,
-        github: false,
-        facebook: false,
-        iucas: true,
-        orcid: false,
+            x509: false,
+            google: false,
+            github: false,
+            facebook: false,
+            iucas: true,
+            orcid: false,
 
-        oidc: false, //cilogon openid-connect service
-        oidc_selector: false, //show idp selector
+            oidc: false, //cilogon openid-connect service
+            oidc_selector: false, //show idp selector
 
-        signup: true,
-    },
-});
+            signup: true,
+        },
+    });
 
 

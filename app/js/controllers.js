@@ -19,7 +19,7 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
         var obsdate = $filter('date')($scope.formData.obsdate, "yyyyMMdd_");
         var expsearch = "filter[where][exp_id][like]=" + obsdate;
 
-        $http.get("/api/exposures/?"+expsearch+"&&access_token=abcd").
+        $http.get(appconf.api_url+"/exposures/?"+expsearch).
         then(function(res) {
             $scope.exposures = res.data;
             angular.forEach($scope.exposures, function(value, key) {
@@ -77,7 +77,7 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
 
         $http({
             method: "POST",
-            url: "/api/downloads?access_token=abcd",
+            url: appconf.api_url+"/downloads",
             data: {
                 files: files,
                 size: size,
@@ -117,13 +117,13 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
 
 });
 
-myapp.controller('DownloadController', function ($scope, $http) {
+myapp.controller('DownloadController', function ($scope, $http, appconf) {
     $scope.title = "EMCenter Data Archive";
     $scope.downloads = [];
 
     $scope.getdownloads = function() {
 
-        $http.get("/api/downloads?access_token=abcd").
+        $http.get(appconf.api_url+"/downloads").
         then(function(res) {
             $scope.downloads = res.data;
         });
@@ -133,18 +133,18 @@ myapp.controller('DownloadController', function ($scope, $http) {
 });
 
 myapp.controller('ActivityController', function ($scope, $http) {
-    $scope.title = "EMCenter Data Archive";
+    $scope.title = "ImageX";
     $scope.processes = [];
 });
 
-myapp.controller('ImagexController', function ($scope, $http) {
+myapp.controller('ImagexController', function ($scope, $http, appconf) {
     $scope.title = "ImageX";
 
     $scope.viewer = OpenSeadragon({
         id: "openseadragon1",
         preserveViewport: true,
         crossOriginPolicy: 'Anonymous',
-        prefixUrl: "/imagex/node_modules/openseadragon/build/openseadragon/images/",
+        prefixUrl: "/node_modules/openseadragon/build/openseadragon/images/",
         imageLoaderLimit: 10
     });
 
@@ -331,7 +331,7 @@ myapp.controller('ImagexController', function ($scope, $http) {
 
     $scope.lookupName = function(namestr, cb){
         $http({
-            url : '/imagex/api/ajax/resolve?q='+namestr,
+            url : appconf.api_url+'/ajax/resolve?q='+namestr,
             method : 'GET'
         }).then(
             function(res){
@@ -348,7 +348,7 @@ myapp.controller('ImagexController', function ($scope, $http) {
         $scope.lookupName($scope.searchname, function(data){
             console.dir(data);
             $http({
-                url : 'https://youngmd6.sca.iu.edu/imagex-api/exposures',
+                url : appconf.api_url+'exposures',
                 method : 'GET'
             }).then(
                 function(res){
@@ -633,7 +633,7 @@ myapp.controller('ImagexController', function ($scope, $http) {
 
 });
 
-myapp.controller('ActivityController', function ($scope, $http, $interval, $rootScope, toaster) {
+myapp.controller('ActivityController', function ($scope, $http, $interval, $rootScope, toaster, appconf) {
     $scope.title = "ImageX";
 
     $scope.comp_proc = {};
@@ -648,7 +648,7 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
             return;
         }
         var process = $scope.curr_proc[pid];
-        $http.get("/imagex-api/processes/"+process.id).
+        $http.get(appconf.api_url+"processes/"+process.id).
             then(function(res) {
                 if(res.data.status == 'COMPLETE' || res.data.status == 'ERROR' || res.data.progress == 1.0){
                     var promise = $scope.watchers[pid];
@@ -667,7 +667,7 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
 
     $scope.clear_curr_proc = function(proc) {
         var promise = $scope.watchers[proc.id];
-        $http.delete("/imagex-api/processes/"+proc.id).
+        $http.delete(appconf.api_url+"processes/"+proc.id).
         then(function(res) {
             $interval.cancel(promise);
             delete $scope.curr_proc(proc);
@@ -676,7 +676,7 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
     }
 
     $scope.clear_comp_proc = function(proc) {
-        $http.delete("/imagex-api/processes/"+proc.id).
+        $http.delete(appconf.api_url+"processes/"+proc.id).
         then(function(res) {
             var index = $scope.comp_proc.indexOf(proc);
             $scope.comp_proc.splice(index, 1);
@@ -687,7 +687,7 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
     $scope.getRecent = function() {
         var d = Date.now() - (24 * 60 * 60 * 1000);
         var procsearch = "filter[where][status][like]=COMPLETE&[filter[where][ended_at][gt]="+d;
-        $http.get("/imagex-api/processes?"+procsearch).
+        $http.get(appconf.api_url+"processes?"+procsearch).
             then(function(res) {
                 console.dir(res);
                 $scope.comp_proc = res.data;
@@ -697,7 +697,7 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
 
     $scope.getCurrent = function() {
         var where = "filter[where][progress][lt]=1";
-        $http.get("/imagex-api/processes?"+where).
+        $http.get(appconf.api_url+"processes?"+where).
             then(function(res) {
                 console.dir(res);
                 if($scope.curr_proc == {}) {
@@ -761,7 +761,7 @@ myapp.controller('SigninController', function ($scope, $http, toaster, appconf) 
 
 });
 
-myapp.controller('UploadController', function ($scope, $http, FileUploader, toaster) {
+myapp.controller('UploadController', function ($scope, $http, FileUploader, toaster, appconf) {
     $scope.title = "ImageX";
 
     $scope.rows = [];
@@ -829,35 +829,4 @@ myapp.controller('UploadController', function ($scope, $http, FileUploader, toas
 
     console.dir('uploader', uploader);
 
-    $scope.process_rows = function() {
-
-        angular.forEach($scope.rows, function(value, key){
-            $scope.rows[key]['inserted'] = false;
-            var tmpdata = $scope.rows[key];
-            var data = {
-                name: tmpdata['Customer Name'],
-                lab: tmpdata['Customer Lab'],
-                equipment: tmpdata['Equipment Name'],
-                title: tmpdata['Customer Title'],
-                scheduled_start: tmpdata['Scheduled Start'],
-                scheduled_end: tmpdata['Scheduled End'],
-                scheduled_hours: tmpdata['Scheduled Hours'],
-                actual_start: tmpdata['Actual Start'],
-                actual_end: tmpdata['Actual End'],
-                actual_hours: tmpdata['Actual Hours'],
-                creation_date: tmpdata['Creation Date']
-            };
-
-            $http({
-                method: "POST",
-                url: "/api/labs?access_token=abcd",
-                data: data
-            }).
-            then(function(res) {
-                $scope.rows[key]['inserted'] = true;
-            });
-
-
-        });
-    };
 });
