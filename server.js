@@ -24,20 +24,8 @@ app.use(methodOverride('X-HTTP-Method-Override')); // override with the X-HTTP-M
 app.use(bodyParser.json({limit: '100mb'}));
 app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
 
-
-app.use('/api', function(req, res) {
-    var url = 'https://portal.odi.iu.edu/' + req.url;
-    console.log(url);
-    request({
-        uri: url,
-        method: "GET",
-        body: req.body,
-        json: true
-    }, function (_err, _res, _resBody) {
-        //do somethings
-        res.json(_resBody);
-    });
-
+app.get('/favicon.ico', function(req, res) {  //return no content for favicon
+    res.status(204);
 });
 
 // routes ======================================================================

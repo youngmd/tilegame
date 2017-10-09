@@ -18,7 +18,7 @@ exports.auth = {
     },
 
     //isser to use for generated jwt token
-    iss: "https://youngmd6.sca.iu.edu/emca",
+    iss: "https://imagex.sca.iu.edu/",
     //ttl for jwt
     ttl: 24*3600*1000, //1 day
 

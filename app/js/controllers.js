@@ -117,20 +117,6 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
 
 });
 
-myapp.controller('DownloadController', function ($scope, $http, appconf) {
-    $scope.title = "EMCenter Data Archive";
-    $scope.downloads = [];
-
-    $scope.getdownloads = function() {
-
-        $http.get(appconf.api_url+"/downloads").
-        then(function(res) {
-            $scope.downloads = res.data;
-        });
-    }
-
-    $scope.getdownloads();
-});
 
 myapp.controller('ActivityController', function ($scope, $http) {
     $scope.title = "ImageX";
@@ -748,17 +734,29 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
 });
 
 
-myapp.controller('SigninController', function ($scope, $http, toaster, appconf) {
-    $scope.appconf = appconf;
-    $scope.username = "";
-    $scope.requestAccess = function() {
-        if ($scope.username == "") {
-            toaster.pop('error', 'Invalid or empty username', "Please enter a valid IU username");
-        } else {
-            toaster.pop('success', 'Access Request for ' + $scope.username, "The EMCenter Admin has been notified.  You will receive an email when access is granted.");
-        }
+myapp.controller('SigninController', function ($scope, $http, toaster, appconf, AuthService) {
+
+    $scope.guestlogin = function() {
+        $scope.username = 'guest@imagex.sca';
+        $scope.password = 'demo';
+        $scope.login();
     }
 
+    $scope.login = function() {
+        if ($scope.username == "") {
+            toaster.pop('error', 'Invalid or empty username', "Please enter a valid email");
+        } else {
+            AuthService.login($scope.username, $scope.password, function (res) {
+                if (res) {
+                    var redirect = sessionStorage.getItem('auth_redirect');
+                    if (redirect == "") redirect = appconf.default_redirect_url;
+                    toaster.pop('success', 'Redirect', "Redirecting to " + redirect);
+                } else {
+                    toaster.pop('error', 'Login Failed', "Check username/password");
+                }
+            });
+        }
+    };
 });
 
 myapp.controller('UploadController', function ($scope, $http, FileUploader, toaster, appconf) {
