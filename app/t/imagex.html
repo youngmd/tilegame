@@ -74,7 +74,10 @@ other selectors that are more specific or come later and might alter display.
             <button class="btn btn-danger" ng-click='clear()'>Clear</button>
             <button class="btn btn-warning" ng-click='deal()'>Deal</button>
             <br>
-            <input class="form-input" type='text' ng-model="searchname">
+            <select class="form-control input-sm" ng-model="cmap" ng-change="colorize(cmap, null)">
+            <option>None</option>
+            <option ng-repeat="(key, value) in colormaps">{{key}}</option>
+            </select>
 
             <table class="table table-condensed">
 
@@ -86,9 +89,11 @@ other selectors that are more specific or come later and might alter display.
 
                         <i class="fa fa-fw fa-eye-slash text-danger" ng-show="value.opacity == 0" ng-click="value.opacity = 1; viewer.forceRedraw()"></i>
                         <i class="fa fa-fw fa-eye text-success" ng-show="value.opacity != 0;" ng-click="value.opacity = 0; viewer.forceRedraw()"></i>
+
+                        <i class="fa fa-fw fa-random text-success" ng-click="colorize(value); viewer.forceRedraw()"></i>
                     </td>
 
-                    <td><em>{{key}} - {{value.selected}}</em></td>
+                    <td><em>{{images[key][6]['OBJECT']}} - {{value.selected}}</em></td>
                 </tr>
                 <tr class="animate-show-hide" ng-repeat-end ng-show="model.activeRow == key;">
                     <td colspan="2">
@@ -104,6 +109,13 @@ other selectors that are more specific or come later and might alter display.
                             <tr>
                                 <td><b>Rotation</b></td>
                                 <td><input ng-model="value.degrees" ng-change="value.setRotation(value.degrees);" /></td>
+                            </tr>
+                            <tr>
+                                <td><b>Colormap</b></td>
+                                <td><select class="form-control input-sm" ng-model="value.cmap" ng-change="colorize(value.cmap, value)">
+                                    <option selected>None</option>
+                                    <option ng-repeat="(key, value) in colormaps">{{key}}</option>
+                                </select></td>
                             </tr>
 
                         </table>

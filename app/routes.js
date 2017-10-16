@@ -5,11 +5,13 @@ var winston = require('winston');
 var jwt = require('express-jwt');
 const jsonwt = require('jsonwebtoken');
 var clone = require('clone');
-
+var multer  = require('multer')
 var config = require('./config');
+var fs = require("fs");
+var path = require("path");
+
 var logger = new winston.Logger(config.logger.winston);
 
-var multer  = require('multer')
 var storage = multer.diskStorage({ //multers disk storage settings
     destination: function (req, file, cb) {
         cb(null, './uploads/')
@@ -19,12 +21,11 @@ var storage = multer.diskStorage({ //multers disk storage settings
         cb(null, file.fieldname + '-' + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length -1])
     }
 });
+
 var upload = multer({ //multer settings
     storage: storage
 }).single('file');
 
-var fs = require("fs"),
-    path = require("path");
 
 
 
@@ -37,7 +38,7 @@ function issue_jwt(user, cb) {
             username: user.username,
         },
     };
-    console.log( jsonwt.sign(claim, config.auth.secret));
+    // console.log( jsonwt.sign(claim, config.auth.secret));
     cb(null, jsonwt.sign(claim, config.auth.secret));
 
 }
@@ -45,12 +46,12 @@ function issue_jwt(user, cb) {
 function imagex_jwt(paths, cb){
     var claim = {
         "scopes": {"imagex": paths},
-        "aud": "spitz.sca.iu.edu",
+        "aud": "imagex.sca.iu.edu",
         "iat": Date.now(),
         "exp": (Date.now() + config.auth.ttl)/1000
     };
 
-    console.log( jsonwt.sign(claim, config.auth.imagex_secret, { algorithm: 'RS256'}));
+    // console.log( jsonwt.sign(claim, config.auth.imagex_secret, { algorithm: 'RS256'}));
     cb( jsonwt.sign(claim, config.auth.imagex_secret, { algorithm: 'RS256'}));
 }
 

@@ -13,23 +13,36 @@
 
 
             <div class="form-group">
-                <label class="col-md-4 control-label">Exposure Date</label>
+                <label class="col-md-4 control-label">Search Header Key</label>
                 <div class="col-md-4">
                     <div class="input-group">
-                        <input type="text" class="form-control" datepicker-popup="{{dateformat}}" ng-model="formData.obsdate" is-open="opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" />
-                        <span class="input-group-btn">
-                                <button type="button" class="btn btn-default" ng-click="dateopen($event)">
-                                    <i class="fa fa-fw fa-calendar"></i></button>
-                            </span>
+                        <input type="text" class="form-control" ng-model="headerkey" placeholder="CAL-OBS"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-4 control-label">Search Operator</label>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" ng-model="searchop" placeholder="[gt|lt|eq]"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-4 control-label">Search Header Value</label>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" ng-model="headerval" placeholder=""/>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-10">
-                    <button class="btn btn-info" ng-click="getexposures()">Get Exposures</button>
-                    <a type="button" ng-show="selected > 0" class="btn btn-success" ng-click="download()"><i class="fa fa-fw fa-download"></i> Download Selected</a>
-                    <a type="button" ng-show="selected > 0" class="btn btn-success"><i class="fa fa-fw fa-refresh"></i> Reprocess Selected</a>
+                    <button class="btn btn-info" ng-click="getexposures()">Get Images</button>
+                    <a type="button" ng-show="selected > 0" class="btn btn-success" ng-click="download()"><i class="fa fa-fw fa-eye"></i> View Selected</a>
 
                 </div>
             </div>
@@ -46,29 +59,29 @@
     <table class="table table-bordered table-hover table-condensed" ng-show="exposures.length">
         <thead>
         <th><input type="checkbox" class="input" ng-model="selectall" ng-click="toggleselectall()"></th>
-        <th>Status</th>
+        <th></th>
         <th>ID</th>
-        <th>Expsoure Time</th>
-        <th>Timestamp (UTC)</th>
-        <th>Number of Exposures</th>
+        <th>Exposure Time</th>
+        <th>Timestamp</th>
         <th>Filesize</th>
         <th>Metadata</th>
         </thead>
-        <tr ng-repeat="exposure in exposures" ng-click="toggleselectexposure($index)" ng-class="{active: exposure.selected}">
-            <!--<span ng-show="person.gender == 'boy'"><i class="fa fa-fw fa-user" style="color:lightblue"></i></span>-->
-            <!--<span ng-show="person.gender == 'girl'"><i class="fa fa-fw fa-user" style="color:pink"></i></span>-->
+        <tr ng-repeat-start="exposure in exposures" ng-click="toggleselectexposure($index)" ng-class="{active: exposure.selected}">
             <td><input type="checkbox" class="input" ng-model="exposure.selected" ng-change="toggleselectexposure($index)"></td>
             <td>
-                <i class="fa fa-fw fa-hdd-o text-success"></i>
-                <i class="fa fa-fw fa-archive text-success"></i>
-                <i class="fa fa-fw fa-refresh text-info"></i>
+                <i class="fa fa-fw fa-plus-circle text-info" ng-hide="showdiv;" ng-click="showdiv = true; $event.stopPropagation();"></i>
+                <i class="fa fa-fw fa-minus-circle text-warning" ng-show="showdiv" ng-click="showdiv = false; $event.stopPropagation();"></i>
             </td>
-            <td>{{exposure.exp_id}}</td>
-            <td>{{exposure.infofile[0]['Exposure Time in Seconds']}}</td>
-            <td>{{exposure.infofile[0]['Timestamp (seconds since Epoch)'] * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</td>
-            <td>{{exposure.infofile[0]['Total Frames in Summed Image']}}</td>
+            <td>{{exposure.name}}</td>
+            <td>{{exposure.header['EXPTIME']}}</td>
+            <td>{{exposure.header['DATE-OBS']}}</td>
             <td>{{exposure.size | bytes}}</td>
-            <td><i class="fa fa-fw fa-file text-info" ng-click="infodump($index)"></i></td>
+            <td><i class="fa fa-fw fa-file text-info" ng-click="infodump($index); $event.stopPropagation();"></i></td>
+        </tr>
+        <tr ng-repeat-end ng-show="showdiv">
+            <td colspan="5">
+                <imagexviewer ixid="{{exposure.id}}" pixelscale={{exposure.pixelscale}} ng-if="showdiv"></imagexviewer>
+            </td>
         </tr>
     </table>
     </ul>

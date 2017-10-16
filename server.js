@@ -1,11 +1,9 @@
 // set up ======================================================================
 var bodyParser = require('body-parser');
 var express = require('express');
-var io = require('socket.io');
 var http = require('http');
 var app = express();
 var server = http.createServer(app);
-var io = io.listen(server);
 var path = require('path');
 var jwt = require('jsonwebtoken');
 var fs = require('fs');
@@ -30,9 +28,6 @@ app.get('/favicon.ico', function(req, res) {  //return no content for favicon
 
 // routes ======================================================================
 require('./app/routes.js')(app);
-
-// set up our socket server
-require('./sockets/base')(io);
 
 // listen (start app with node server.js) ======================================
 server.listen(port);

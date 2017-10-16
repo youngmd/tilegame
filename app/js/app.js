@@ -16,7 +16,7 @@ var myapp = angular.module('myapp', [
 ]);
 
 myapp.factory('AuthService', function(appconf, $http) {
-    console.log(localStorage.getItem(appconf.user));
+
     var user = JSON.parse(localStorage.getItem(appconf.user));
     var authToken = JSON.parse(localStorage.getItem(appconf.auth_token));
 
@@ -59,7 +59,23 @@ myapp.factory('AuthService', function(appconf, $http) {
             }).then(function(res) {
                 localStorage.removeItem(appconf.user);
                 localStorage.removeItem(appconf.auth_token);
+                user = undefined;
+                authToken = undefined;
                 cb(true);
+            }, function(err) {
+                console.dir(err);
+                cb(false);
+            });
+        },
+        getRoles: function(cb) {
+            $http({
+                method: "GET",
+                url: appconf.api_url+"/users/"+user.id+"/getRolesById?&access_token="+authToken.id
+            }).then(function(res) {
+                var roles = res.data.payload.roles;
+                user["roles"] = roles;
+                localStorage.setItem(appconf.user, JSON.stringify(user));
+                cb(roles);
             }, function(err) {
                 console.dir(err);
                 cb(false);
@@ -68,6 +84,22 @@ myapp.factory('AuthService', function(appconf, $http) {
         isLoggedIn: function() { return (user.username != '');},
         checkToken: function() { return (authToken.id != '');}
     };
+});
+
+myapp.factory('TokenService', function($http){
+    return {
+        get: function(eid, cb) {
+            $http({
+                url: '/tokennew/'+eid
+            }).then(function(res){
+                cb(res.data);
+            },
+            function(err){
+                console.dir(err);
+                cb(null);
+            })
+        }
+    }
 });
 
 myapp.filter('bytes', function() {
@@ -91,6 +123,48 @@ myapp.filter('limitObjectTo', function() {
     };
 });
 
+myapp.directive('imagexviewer', function() {
+   return {
+       restrict: "E",
+       replace: true,
+       transclude: true,
+       scope: {
+           ixid: '@',
+           pixelscale: '@'
+       },
+       template: "<div id=\"{{ixid}}\" class=\"openseadragon\" style=\"height: 400px;\"></div>",
+       controller: ['$scope', '$timeout', 'appconf', 'TokenService', function ($scope, $timeout, appconf, TokenService) {
+
+           $timeout(function(){
+               TokenService.get($scope.ixid, function(at){
+                   console.log($scope.ixid);
+                   $scope.viewer = OpenSeadragon({
+                       id: $scope.ixid,
+                       prefixUrl: "/public/images/osd_buttons/",
+                       tileSources: "/imagexdata/imagex/"+$scope.ixid+"/image.dzi?at="+at
+                   });
+
+                   $scope.viewer.scalebar({
+                       type: OpenSeadragon.ScalebarType.MAP,
+                       sizeAndTextRenderer: OpenSeadragon.ScalebarSizeAndTextRenderer.ASTRONOMY,
+                       pixelsPerMeter: (1 / parseFloat($scope.pixelscale)),
+                       location: OpenSeadragon.ScalebarLocation.BOTTOM_LEFT,
+                       xOffset: 5,
+                       yOffset: 10,
+                       minWidth: "75px",
+                       stayInsideImage: false,
+                       color: "rgb(100, 100, 100)",
+                       fontColor: "rgb(100, 100, 100)",
+                       backgroundColor: "rgba(255, 255, 255, 0.9)",
+                       fontSize: "small",
+                       barThickness: 2
+                   });
+               });
+           });
+       }]
+    };
+});
+
 myapp.directive('navbar', function() {
     return {
         restrict: "E",
@@ -101,11 +175,10 @@ myapp.directive('navbar', function() {
         templateUrl: 't/navbar.html',
         controller: ['$scope', '$location','appconf', 'AuthService', 'toaster', function ($scope, $location, appconf, AuthService, toaster) {
             $scope.user = AuthService.user();
-            $scope.username = $scope.user.username;
-            console.dir($scope.user);
             $scope.title = appconf.title;
             $scope.logout = function() {
                 AuthService.logout(function(res){
+                    console.dir(res);
                     if(res){
                         $location.path("/signin");
                         toaster.pop('success', 'Logged Out', "Successfully logged out");
@@ -165,6 +238,12 @@ myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
             controller: 'UploadController',
             requiresLogin: true
         })
+        .when('/users', {
+            templateUrl: 't/users.html',
+            controller: 'UserController',
+            requiresLogin: true,
+            requiresAdmin: true
+        })
         .when('/imagex', {
             templateUrl: 't/imagex.html',
             controller: 'ImagexController',
@@ -184,8 +263,18 @@ myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
                 sessionStorage.setItem('auth_redirect', next.originalPath);
                 $location.path("/signin");
                 event.preventDefault();
+                return;
+            }
+
+            if(next.requiresAdmin) {
+                var user = AuthService.user();
+                if(user.roles == undefined || user.roles.indexOf('admin') == -1) {
+                    toaster.warning("You are not authorized to access that location");
+                    event.preventDefault();
+                }
             }
         }
+
     });
 }]);
 
