@@ -11,33 +11,41 @@
     <form class="form-horizontal">
         <fieldset>
 
-
             <div class="form-group">
-                <label class="col-md-4 control-label">Search Header Key</label>
+                <label class="col-md-4 control-label">Filename</label>
                 <div class="col-md-4">
                     <div class="input-group">
-                        <input type="text" class="form-control" ng-model="headerkey" placeholder="CAL-OBS"/>
+                        <input type="text" class="form-control" ng-model="searchform.filename" placeholder="filename"/>
                     </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="col-md-4 control-label">Search Operator</label>
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <input type="text" class="form-control" ng-model="searchop" placeholder="[gt|lt|eq]"/>
-                    </div>
-                </div>
-            </div>
+            <!--<div class="form-group">-->
+                <!--<label class="col-md-4 control-label">Search Header Key</label>-->
+                <!--<div class="col-md-4">-->
+                    <!--<div class="input-group">-->
+                        <!--<input type="text" class="form-control" ng-model="headerkey" placeholder="CAL-OBS"/>-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
 
-            <div class="form-group">
-                <label class="col-md-4 control-label">Search Header Value</label>
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <input type="text" class="form-control" ng-model="headerval" placeholder=""/>
-                    </div>
-                </div>
-            </div>
+            <!--<div class="form-group">-->
+                <!--<label class="col-md-4 control-label">Search Operator</label>-->
+                <!--<div class="col-md-4">-->
+                    <!--<div class="input-group">-->
+                        <!--<input type="text" class="form-control" ng-model="searchop" placeholder="[gt|lt|eq]"/>-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
+
+            <!--<div class="form-group">-->
+                <!--<label class="col-md-4 control-label">Search Header Value</label>-->
+                <!--<div class="col-md-4">-->
+                    <!--<div class="input-group">-->
+                        <!--<input type="text" class="form-control" ng-model="headerval" placeholder=""/>-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
 
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-10">
@@ -80,7 +88,7 @@
         </tr>
         <tr ng-repeat-end ng-show="showdiv">
             <td colspan="5">
-                <imagexviewer ixid="{{exposure.id}}" pixelscale={{exposure.pixelscale}} ng-if="showdiv"></imagexviewer>
+                <imagexviewer imageids='{{[exposure.id]}}' ixid="{{exposure.id}}" ixheight=500 ng-if="showdiv"></imagexviewer>
             </td>
         </tr>
     </table>

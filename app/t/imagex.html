@@ -1,83 +1,38 @@
-<navbar active="imagex"></navbar>
-<style>
-    .container-fluid .row {
-        width: 100%;
-        height: 100%;
-    }
+<!--<navbar active="imagex"></navbar>-->
 
-    .openseadragon
-    {
-        width: 100%;
-        height: 800px;
-        overflow: hidden;
-        border:     1px solid black;
-        color:      #333; /* text color for messages */
-        background-color: grey;
-    }
-
-    .navigator .highlight{
-        opacity:    0.1;
-        filter:     alpha(opacity=10);
-        outline:    2px solid #900;
-        background-color: #900;
-    }
-    .highlight{
-        opacity:    0.3;
-        filter:     alpha(opacity=20);
-        outline:    5px auto #0A7EbE;
-        /*background-color: #6d9cff;*/
-    }
-
-
-    /*.highlight:hover, .highlight:focus{*/
-    /*filter:     alpha(opacity=10);*/
-    /*opacity:    0.1;*/
-    /*background-color: transparent;*/
-    /*}*/
-
-    .infobox{
-
-    }
-
-
-
-</style>
-
-<style>
-    .animate-show-hide.ng-hide {
-        opacity: 0;
-    }
-
-    .animate-show-hide.ng-hide-remove {
-        transition: all linear 0.3s;
-    }
-
-    .animate-show-hide.ng-hide-add {
-        transition: all linear 0s;
-    }
-
-    /*
-Allow angular.js to be loaded in body, hiding cloaked elements until
-templates compile.  The !important is important given that there may be
-other selectors that are more specific or come later and might alter display.
-*/
-    [ng\:cloak], [ng-cloak], .ng-cloak {
-        display: none !important;
-    }
-</style>
 
 <div class="container-fluid">
 
     <div class="row">
-        <div class="col-md-4 col-xs-12" style="overflow-y: auto;">
-            <button class="btn btn-success" ng-click='addImages()'>Add Image</button>
-            <button class="btn btn-danger" ng-click='clear()'>Clear</button>
-            <button class="btn btn-warning" ng-click='deal()'>Deal</button>
-            <br>
-            <select class="form-control input-sm" ng-model="cmap" ng-change="colorize(cmap, null)">
-            <option>None</option>
-            <option ng-repeat="(key, value) in colormaps">{{key}}</option>
-            </select>
+        <div class="col-md-4 col-xs-12">
+            <div class="btn-toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-success" ng-click='getImages(addImages)'>Add Image</a>
+                    <a class="btn btn-default" ng-click='gridView()' ng-class="{active : arrangement == 'grid'}">
+                        <img class="smallbtnicon" src="public/images/icons/grid.png">
+                    </a>
+                    <a class="btn btn-default" ng-click='wcsView()' ng-class="{active : arrangement == 'wcs'}">
+                        <img class="smallbtnicon" src="public/images/icons/wcs.png">
+                    </a>
+                    <a class="btn btn-default" ng-class="{active : scalebar}" ng-click='toggleScalebar()'>
+                        <img class="smallbtnicon" src="public/images/icons/ruler.png">
+                    </a>
+                    <a class="btn btn-default" ng-class="{active : infooverlay}" ng-click="infooverlay = !infooverlay">
+                        <i class="fa fa-fw fa-info"></i>
+                    </a>
+                    <div class="btn-group">
+                        <a role="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                            <img class="smallbtnicon" src="public/images/icons/color-wheel.png">
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu cmapselector">
+                            <li ng-repeat="(key, value) in colormaps" ng-click="colorize(key, null)" ng-class="{active : model.cmap == key}">
+                                <a><div style="width:100px;" colormap cmap="colormaps[key]" width=100 height=10 label="  {{key.split('_')[0]}}"></div></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
             <table class="table table-condensed">
 
@@ -93,14 +48,22 @@ other selectors that are more specific or come later and might alter display.
                         <i class="fa fa-fw fa-random text-success" ng-click="colorize(value); viewer.forceRedraw()"></i>
                     </td>
 
-                    <td><em>{{images[key][6]['OBJECT']}} - {{value.selected}}</em></td>
+                    <td><em>{{images[key].header['OBJECT']}} - {{value.selected}}</em></td>
                 </tr>
                 <tr class="animate-show-hide" ng-repeat-end ng-show="model.activeRow == key;">
                     <td colspan="2">
                         <table class="table table-condensed">
                             <tr>
                                 <td><b>Filter</b></td>
-                                <td>{{images[key][5]}}</td>
+                                <td>{{images[key].filter}}</td>
+                            </tr>
+                            <tr>
+                                <td><b>position.x</b></td>
+                                <td><input ng-model="value.x" ng-change="reposition(value)" type="number"/></td>
+                            </tr>
+                            <tr>
+                                <td><b>position.y</b></td>
+                                <td><input ng-model="value.y" ng-change="reposition(value)" type="number" /></td>
                             </tr>
                             <tr>
                                 <td><b>Opacity</b></td>
@@ -113,8 +76,13 @@ other selectors that are more specific or come later and might alter display.
                             <tr>
                                 <td><b>Colormap</b></td>
                                 <td><select class="form-control input-sm" ng-model="value.cmap" ng-change="colorize(value.cmap, value)">
-                                    <option selected>None</option>
-                                    <option ng-repeat="(key, value) in colormaps">{{key}}</option>
+                                    <option ng-repeat="(km, value) in colormaps">{{km}}</option>
+                                </select></td>
+                            </tr>
+                            <tr>
+                                <td><b>Composite Operation</b></td>
+                                <td><select class="form-control input-sm" ng-model="value.compositeOperation" ng-change="viewer.forceRedraw()">
+                                    <option ng-repeat="comp in compositeOptions">{{comp}}</option>
                                 </select></td>
                             </tr>
 
@@ -123,8 +91,13 @@ other selectors that are more specific or come later and might alter display.
                 </tr>
             </table>
         </div>
-        <div class="col-md-8 col-xs-12">
-            <div id="openseadragon1" class="openseadragon">
+        <div id="osdcontainer" class="col-md-8 col-xs-12">
+            <div id="{{ixid}}" class="openseadragon" style="height: {{ixheight}}px;">
+                <div id="infooverlay" ng-show="infooverlay">
+                    <div id="infotext">
+                        <small>{{model.infocoords.ra | number:4}}, {{model.infocoords.dec | number:4}}</small>
+                    </div>
+                </div>
             </div>
         </div>
 

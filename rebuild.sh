@@ -9,5 +9,5 @@ if [[ $contID ]]; then
     docker rm $contID;
 fi
 
-docker rmi $iID
+#docker rmi $iID
 docker build -t $iID .

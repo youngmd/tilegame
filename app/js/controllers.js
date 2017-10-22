@@ -9,11 +9,25 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
     $scope.headerkey;
     $scope.headerval;
     $scope.headerstr;
+    $scope.searchobj;
     $scope.searchop;
+
+    $scope.searchform = {
+        filename: '',
+        minDate: '',
+        maxDate: '',
+        ra: '',
+        dec: '',
+        radius: 1.0,
+        radscale: 'degree'
+    }
 
     $scope.getexposures = function() {
         $scope.selected = 0;
         $scope.exposures = [];
+
+
+
         // if(typeof $scope.formData.obsdate == 'undefined') {
         //     toaster.pop('error', 'Bad Date', "Enter a valid date to search");
         //     return;
@@ -22,13 +36,21 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
         // var obsdate = $filter('date')($scope.formData.obsdate, "yyyyMMdd_");
         // var expsearch = "filter[where][exp_id][like]=" + obsdate;
 
-        var headerstr = angular.toJson("header."+$scope.headerkey);
-        console.log($scope.headerkey);
-        //$http.get(appconf.api_url+"/exposures/?"+expsearch).
-        var searchObj = {"where": { headerstr : $scope.headerval }};
-        console.log(searchObj);
-        searchObj = encodeURIComponent(JSON.stringify(searchObj));
-        var url = appconf.api_url+"/exposures?filter="+searchObj;
+        // $scope.headerstr = "header."+$scope.headerkey;
+        // //$http.get(appconf.api_url+"/exposures/?"+expsearch).
+        // var searchObj = {"where":{}};
+        // searchObj.where[$scope.headerstr] = {};
+        // searchObj.where[$scope.headerstr][$scope.searchop] = parseFloat($scope.headerval);
+        // console.log(searchObj);
+        // console.log(JSON.stringify(searchObj));
+        // searchObj = encodeURIComponent(JSON.stringify(searchObj));
+        // console.log(searchObj);
+
+        var searchStr = "/exposures?";
+        if($scope.searchform.filename != ''){
+            searchStr = searchStr + "filter[where][name][like]="+$scope.searchform.filename+"*"
+        }
+        var url = appconf.api_url+searchStr;
         console.log(url);
         $http.get(url).
         then(function(res) {
@@ -96,30 +118,81 @@ myapp.controller('ActivityController', function ($scope, $http) {
     $scope.processes = [];
 });
 
-myapp.controller('ImagexController', function ($scope, $http, appconf) {
+myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf) {
     $scope.title = "ImageX";
+    $scope.pixelscale;
+    $scope.infooverlay = true;
+    $scope.model = {
+        infocoords: [],
+        cmap: 'grey_cm'
+    };
+    $scope.images = {};
+    $scope.wcs = null;
+    $scope.scalebar = true;
+    $scope.arrangement = 'wcs';
+    $scope.viewer;
+    $scope.associations = {};
+    $scope.filters = [];
+    $scope.limit = (appconf.tile_load_limit != undefined) ? appconf.tile_load_limit : 50;
 
-    $scope.viewer = OpenSeadragon({
-        id: "openseadragon1",
-        preserveViewport: true,
-        crossOriginPolicy: 'Anonymous',
-        prefixUrl: "/public/images/osd_buttons/",
-        imageLoaderLimit: 10
+    $scope.createViewer = function() {
+        $scope.viewer = OpenSeadragon({
+            id: $scope.ixid,
+            preserveViewport: true,
+            crossOriginPolicy: 'Anonymous',
+            prefixUrl: "/public/images/osd_buttons/",
+            imageLoaderLimit: 25,
+            compositeOperation: 'lighter'
+        });
+
+        $scope.viewer.addViewerInputHook({hooks: [
+            {tracker: 'viewer', handler: 'moveHandler', hookHandler: $scope.onViewerMove}
+        ]});
+    };
+
+    $scope.onViewerMove = function(event) {
+        var viewportPoint = $scope.viewer.viewport.pointFromPixel(event.position);
+
+        if($scope.wcs != null){
+            $scope.model.infocoords = $scope.wcs.pixelToCoordinate([viewportPoint.x, viewportPoint.y]);
+            $scope.$apply();
+        }
+    };
+
+    $timeout(function () {
+        //DOM has finished rendering
+        $scope.createViewer(); //need to run this after declaring hookHandler functions;
     });
 
+    $scope.addScalebar = function(){
+        $scope.viewer.scalebar({
+            type: OpenSeadragon.ScalebarType.MAP,
+            sizeAndTextRenderer: OpenSeadragon.ScalebarSizeAndTextRenderer.ASTRONOMY,
+            pixelsPerMeter: (1 / parseFloat($scope.pixelscale)),
+            location: OpenSeadragon.ScalebarLocation.BOTTOM_LEFT,
+            xOffset: 5,
+            yOffset: 10,
+            minWidth: "75px",
+            stayInsideImage: false,
+            color: "rgb(100, 100, 100)",
+            fontColor: "rgb(100, 100, 100)",
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            fontSize: "small",
+            barThickness: 2
+        });
+    };
 
-
-    // $scope.viewer.setFilterOptions({
-    //     processors: [
-    //         OpenSeadragon.Filters.INVERT()
-    //     ]
-    // });
-
-
-    var viewer = $scope.viewer;
-
-    $scope.selectoverlays = [];
-    $scope.infooverlays = [];
+    $scope.toggleScalebar = function(){
+        if($scope.scalebar){
+            $scope.scalebar = false;
+            $scope.viewer.scalebar({
+                pixelsPerMeter: 0
+            });
+        } else {
+            $scope.scalebar = true;
+            $scope.addScalebar();
+        }
+    }
 
     $scope.colormaps = {
         a_cm: [ [0,0,0], [0,4,0], [0,8,0], [0,12,0], [0,16,0], [0,20,0], [0,24,0], [0,28,0], [0,32,0], [0,36,0], [0,40,0], [0,44,0], [0,48,0], [0,52,0], [0,56,0], [0,60,0], [0,64,0], [0,68,0], [0,72,0], [0,76,0], [0,80,0], [0,85,0], [0,89,0], [0,93,0], [0,97,0], [0,101,0], [0,105,0], [0,109,0], [0,113,0], [0,117,0], [0,121,0], [0,125,0], [0,129,2], [0,133,5], [0,137,7], [0,141,10], [0,145,13], [0,149,15], [0,153,18], [0,157,21], [0,161,23], [0,165,26], [0,170,29], [0,174,31], [0,178,34], [0,182,37], [0,186,39], [0,190,42], [0,194,45], [0,198,47], [0,202,50], [0,206,53], [0,210,55], [0,214,58], [0,218,61], [0,222,63], [0,226,66], [0,230,69], [0,234,71], [0,238,74], [0,242,77], [0,246,79], [0,250,82], [0,255,85], [3,251,87], [7,247,90], [11,243,92], [15,239,95], [19,235,98], [23,231,100], [27,227,103], [31,223,106], [35,219,108], [39,215,111], [43,211,114], [47,207,116], [51,203,119], [55,199,122], [59,195,124], [63,191,127], [67,187,130], [71,183,132], [75,179,135], [79,175,138], [83,171,140], [87,167,143], [91,163,146], [95,159,148], [99,155,151], [103,151,154], [107,147,156], [111,143,159], [115,139,162], [119,135,164], [123,131,167], [127,127,170], [131,123,172], [135,119,175], [139,115,177], [143,111,180], [147,107,183], [151,103,185], [155,99,188], [159,95,191], [163,91,193], [167,87,196], [171,83,199], [175,79,201], [179,75,204], [183,71,207], [187,67,209], [191,63,212], [195,59,215], [199,55,217], [203,51,220], [207,47,223], [211,43,225], [215,39,228], [219,35,231], [223,31,233], [227,27,236], [231,23,239], [235,19,241], [239,15,244], [243,11,247], [247,7,249], [251,3,252], [255,0,255], [255,0,251], [255,0,247], [255,0,244], [255,0,240], [255,0,237], [255,0,233], [255,0,230], [255,0,226], [255,0,223], [255,0,219], [255,0,216], [255,0,212], [255,0,208], [255,0,205], [255,0,201], [255,0,198], [255,0,194], [255,0,191], [255,0,187], [255,0,184], [255,0,180], [255,0,177], [255,0,173], [255,0,170], [255,0,166], [255,0,162], [255,0,159], [255,0,155], [255,0,152], [255,0,148], [255,0,145], [255,0,141], [255,0,138], [255,0,134], [255,0,131], [255,0,127], [255,0,123], [255,0,119], [255,0,115], [255,0,112], [255,0,108], [255,0,104], [255,0,100], [255,0,96], [255,0,92], [255,0,88], [255,0,85], [255,0,81], [255,0,77], [255,0,73], [255,0,69], [255,0,65], [255,0,61], [255,0,57], [255,0,54], [255,0,50], [255,0,46], [255,0,42], [255,0,38], [255,0,34], [255,0,30], [255,0,27], [255,0,23], [255,0,19], [255,0,15], [255,0,11], [255,0,7], [255,0,3], [255,0,0], [255,4,0], [255,8,0], [255,12,0], [255,17,0], [255,21,0], [255,25,0], [255,30,0], [255,34,0], [255,38,0], [255,43,0], [255,47,0], [255,51,0], [255,56,0], [255,60,0], [255,64,0], [255,69,0], [255,73,0], [255,77,0], [255,82,0], [255,86,0], [255,90,0], [255,95,0], [255,99,0], [255,103,0], [255,108,0], [255,112,0], [255,116,0], [255,121,0], [255,125,0], [255,129,0], [255,133,0], [255,138,0], [255,142,0], [255,146,0], [255,151,0], [255,155,0], [255,159,0], [255,164,0], [255,168,0], [255,172,0], [255,177,0], [255,181,0], [255,185,0], [255,190,0], [255,194,0], [255,198,0], [255,203,0], [255,207,0], [255,211,0], [255,216,0], [255,220,0], [255,224,0], [255,229,0], [255,233,0], [255,237,0], [255,242,0], [255,246,0], [255,250,0], [255,255,0]],
@@ -136,329 +209,84 @@ myapp.controller('ImagexController', function ($scope, $http, appconf) {
         rainbow_cm: [ [255,0,255], [250,0,255], [245,0,255], [240,0,255], [235,0,255], [230,0,255], [225,0,255], [220,0,255], [215,0,255], [210,0,255], [205,0,255], [200,0,255], [195,0,255], [190,0,255], [185,0,255], [180,0,255], [175,0,255], [170,0,255], [165,0,255], [160,0,255], [155,0,255], [150,0,255], [145,0,255], [140,0,255], [135,0,255], [130,0,255], [125,0,255], [120,0,255], [115,0,255], [110,0,255], [105,0,255], [100,0,255], [95,0,255], [90,0,255], [85,0,255], [80,0,255], [75,0,255], [70,0,255], [65,0,255], [60,0,255], [55,0,255], [50,0,255], [45,0,255], [40,0,255], [35,0,255], [30,0,255], [25,0,255], [20,0,255], [15,0,255], [10,0,255], [5,0,255], [0,0,255], [0,5,255], [0,10,255], [0,15,255], [0,20,255], [0,25,255], [0,30,255], [0,35,255], [0,40,255], [0,45,255], [0,50,255], [0,55,255], [0,60,255], [0,65,255], [0,70,255], [0,75,255], [0,80,255], [0,85,255], [0,90,255], [0,95,255], [0,100,255], [0,105,255], [0,110,255], [0,115,255], [0,120,255], [0,125,255], [0,130,255], [0,135,255], [0,140,255], [0,145,255], [0,150,255], [0,155,255], [0,160,255], [0,165,255], [0,170,255], [0,175,255], [0,180,255], [0,185,255], [0,190,255], [0,195,255], [0,200,255], [0,205,255], [0,210,255], [0,215,255], [0,220,255], [0,225,255], [0,230,255], [0,235,255], [0,240,255], [0,245,255], [0,250,255], [0,255,255], [0,255,250], [0,255,245], [0,255,240], [0,255,235], [0,255,230], [0,255,225], [0,255,220], [0,255,215], [0,255,210], [0,255,205], [0,255,200], [0,255,195], [0,255,190], [0,255,185], [0,255,180], [0,255,175], [0,255,170], [0,255,165], [0,255,160], [0,255,155], [0,255,150], [0,255,145], [0,255,140], [0,255,135], [0,255,130], [0,255,125], [0,255,120], [0,255,115], [0,255,110], [0,255,105], [0,255,100], [0,255,95], [0,255,90], [0,255,85], [0,255,80], [0,255,75], [0,255,70], [0,255,65], [0,255,60], [0,255,55], [0,255,50], [0,255,45], [0,255,40], [0,255,35], [0,255,30], [0,255,25], [0,255,20], [0,255,15], [0,255,10], [0,255,5], [0,255,0], [5,255,0], [10,255,0], [15,255,0], [20,255,0], [25,255,0], [30,255,0], [35,255,0], [40,255,0], [45,255,0], [50,255,0], [55,255,0], [60,255,0], [65,255,0], [70,255,0], [75,255,0], [80,255,0], [85,255,0], [90,255,0], [95,255,0], [100,255,0], [105,255,0], [110,255,0], [115,255,0], [120,255,0], [125,255,0], [130,255,0], [135,255,0], [140,255,0], [145,255,0], [150,255,0], [155,255,0], [160,255,0], [165,255,0], [170,255,0], [175,255,0], [180,255,0], [185,255,0], [190,255,0], [195,255,0], [200,255,0], [205,255,0], [210,255,0], [215,255,0], [220,255,0], [225,255,0], [230,255,0], [235,255,0], [240,255,0], [245,255,0], [250,255,0], [255,255,0], [255,250,0], [255,245,0], [255,240,0], [255,235,0], [255,230,0], [255,225,0], [255,220,0], [255,215,0], [255,210,0], [255,205,0], [255,200,0], [255,195,0], [255,190,0], [255,185,0], [255,180,0], [255,175,0], [255,170,0], [255,165,0], [255,160,0], [255,155,0], [255,150,0], [255,145,0], [255,140,0], [255,135,0], [255,130,0], [255,125,0], [255,120,0], [255,115,0], [255,110,0], [255,105,0], [255,100,0], [255,95,0], [255,90,0], [255,85,0], [255,80,0], [255,75,0], [255,70,0], [255,65,0], [255,60,0], [255,55,0], [255,50,0], [255,45,0], [255,40,0], [255,35,0], [255,30,0], [255,25,0], [255,20,0], [255,15,0], [255,10,0], [255,5,0], [255,0,0]],
         red_cm: [ [0,0,0], [1,0,0], [2,0,0], [3,0,0], [4,0,0], [5,0,0], [6,0,0], [7,0,0], [8,0,0], [9,0,0], [10,0,0], [11,0,0], [12,0,0], [13,0,0], [14,0,0], [15,0,0], [16,0,0], [17,0,0], [18,0,0], [19,0,0], [20,0,0], [21,0,0], [22,0,0], [23,0,0], [24,0,0], [25,0,0], [26,0,0], [27,0,0], [28,0,0], [29,0,0], [30,0,0], [31,0,0], [32,0,0], [33,0,0], [34,0,0], [35,0,0], [36,0,0], [37,0,0], [38,0,0], [39,0,0], [40,0,0], [41,0,0], [42,0,0], [43,0,0], [44,0,0], [45,0,0], [46,0,0], [47,0,0], [48,0,0], [49,0,0], [50,0,0], [51,0,0], [52,0,0], [53,0,0], [54,0,0], [55,0,0], [56,0,0], [57,0,0], [58,0,0], [59,0,0], [60,0,0], [61,0,0], [62,0,0], [63,0,0], [64,0,0], [65,0,0], [66,0,0], [67,0,0], [68,0,0], [69,0,0], [70,0,0], [71,0,0], [72,0,0], [73,0,0], [74,0,0], [75,0,0], [76,0,0], [77,0,0], [78,0,0], [79,0,0], [80,0,0], [81,0,0], [82,0,0], [83,0,0], [84,0,0], [85,0,0], [86,0,0], [87,0,0], [88,0,0], [89,0,0], [90,0,0], [91,0,0], [92,0,0], [93,0,0], [94,0,0], [95,0,0], [96,0,0], [97,0,0], [98,0,0], [99,0,0], [100,0,0], [101,0,0], [102,0,0], [103,0,0], [104,0,0], [105,0,0], [106,0,0], [107,0,0], [108,0,0], [109,0,0], [110,0,0], [111,0,0], [112,0,0], [113,0,0], [114,0,0], [115,0,0], [116,0,0], [117,0,0], [118,0,0], [119,0,0], [120,0,0], [121,0,0], [122,0,0], [123,0,0], [124,0,0], [125,0,0], [126,0,0], [127,0,0], [128,0,0], [129,0,0], [130,0,0], [131,0,0], [132,0,0], [133,0,0], [134,0,0], [135,0,0], [136,0,0], [137,0,0], [138,0,0], [139,0,0], [140,0,0], [141,0,0], [142,0,0], [143,0,0], [144,0,0], [145,0,0], [146,0,0], [147,0,0], [148,0,0], [149,0,0], [150,0,0], [151,0,0], [152,0,0], [153,0,0], [154,0,0], [155,0,0], [156,0,0], [157,0,0], [158,0,0], [159,0,0], [160,0,0], [161,0,0], [162,0,0], [163,0,0], [164,0,0], [165,0,0], [166,0,0], [167,0,0], [168,0,0], [169,0,0], [170,0,0], [171,0,0], [172,0,0], [173,0,0], [174,0,0], [175,0,0], [176,0,0], [177,0,0], [178,0,0], [179,0,0], [180,0,0], [181,0,0], [182,0,0], [183,0,0], [184,0,0], [185,0,0], [186,0,0], [187,0,0], [188,0,0], [189,0,0], [190,0,0], [191,0,0], [192,0,0], [193,0,0], [194,0,0], [195,0,0], [196,0,0], [197,0,0], [198,0,0], [199,0,0], [200,0,0], [201,0,0], [202,0,0], [203,0,0], [204,0,0], [205,0,0], [206,0,0], [207,0,0], [208,0,0], [209,0,0], [210,0,0], [211,0,0], [212,0,0], [213,0,0], [214,0,0], [215,0,0], [216,0,0], [217,0,0], [218,0,0], [219,0,0], [220,0,0], [221,0,0], [222,0,0], [223,0,0], [224,0,0], [225,0,0], [226,0,0], [227,0,0], [228,0,0], [229,0,0], [230,0,0], [231,0,0], [232,0,0], [233,0,0], [234,0,0], [235,0,0], [236,0,0], [237,0,0], [238,0,0], [239,0,0], [240,0,0], [241,0,0], [242,0,0], [243,0,0], [244,0,0], [245,0,0], [246,0,0], [247,0,0], [248,0,0], [249,0,0], [250,0,0], [251,0,0], [252,0,0], [253,0,0], [254,0,0], [255,0,0]],
         standard_cm: [ [0,0,0], [0,0,3], [1,1,6], [2,2,9], [3,3,12], [4,4,15], [5,5,18], [6,6,21], [7,7,24], [8,8,27], [9,9,30], [10,10,33], [10,10,36], [11,11,39], [12,12,42], [13,13,45], [14,14,48], [15,15,51], [16,16,54], [17,17,57], [18,18,60], [19,19,63], [20,20,66], [20,20,69], [21,21,72], [22,22,75], [23,23,78], [24,24,81], [25,25,85], [26,26,88], [27,27,91], [28,28,94], [29,29,97], [30,30,100], [30,30,103], [31,31,106], [32,32,109], [33,33,112], [34,34,115], [35,35,118], [36,36,121], [37,37,124], [38,38,127], [39,39,130], [40,40,133], [40,40,136], [41,41,139], [42,42,142], [43,43,145], [44,44,148], [45,45,151], [46,46,154], [47,47,157], [48,48,160], [49,49,163], [50,50,166], [51,51,170], [51,51,173], [52,52,176], [53,53,179], [54,54,182], [55,55,185], [56,56,188], [57,57,191], [58,58,194], [59,59,197], [60,60,200], [61,61,203], [61,61,206], [62,62,209], [63,63,212], [64,64,215], [65,65,218], [66,66,221], [67,67,224], [68,68,227], [69,69,230], [70,70,233], [71,71,236], [71,71,239], [72,72,242], [73,73,245], [74,74,248], [75,75,251], [76,76,255], [0,78,0], [1,80,1], [2,82,2], [3,84,3], [4,87,4], [5,89,5], [6,91,6], [7,93,7], [8,95,8], [9,97,9], [9,99,9], [10,101,10], [11,103,11], [12,105,12], [13,108,13], [14,110,14], [15,112,15], [16,114,16], [17,116,17], [18,118,18], [18,120,18], [19,122,19], [20,124,20], [21,126,21], [22,129,22], [23,131,23], [24,133,24], [25,135,25], [26,137,26], [27,139,27], [27,141,27], [28,143,28], [29,145,29], [30,147,30], [31,150,31], [32,152,32], [33,154,33], [34,156,34], [35,158,35], [36,160,36], [36,162,36], [37,164,37], [38,166,38], [39,168,39], [40,171,40], [41,173,41], [42,175,42], [43,177,43], [44,179,44], [45,181,45], [45,183,45], [46,185,46], [47,187,47], [48,189,48], [49,192,49], [50,194,50], [51,196,51], [52,198,52], [53,200,53], [54,202,54], [54,204,54], [55,206,55], [56,208,56], [57,210,57], [58,213,58], [59,215,59], [60,217,60], [61,219,61], [62,221,62], [63,223,63], [63,225,63], [64,227,64], [65,229,65], [66,231,66], [67,234,67], [68,236,68], [69,238,69], [70,240,70], [71,242,71], [72,244,72], [72,246,72], [73,248,73], [74,250,74], [75,252,75], [76,255,76], [78,0,0], [80,1,1], [82,2,2], [84,3,3], [86,4,4], [88,5,5], [91,6,6], [93,7,7], [95,8,8], [97,8,8], [99,9,9], [101,10,10], [103,11,11], [105,12,12], [107,13,13], [109,14,14], [111,15,15], [113,16,16], [115,16,16], [118,17,17], [120,18,18], [122,19,19], [124,20,20], [126,21,21], [128,22,22], [130,23,23], [132,24,24], [134,24,24], [136,25,25], [138,26,26], [140,27,27], [142,28,28], [144,29,29], [147,30,30], [149,31,31], [151,32,32], [153,32,32], [155,33,33], [157,34,34], [159,35,35], [161,36,36], [163,37,37], [165,38,38], [167,39,39], [169,40,40], [171,40,40], [174,41,41], [176,42,42], [178,43,43], [180,44,44], [182,45,45], [184,46,46], [186,47,47], [188,48,48], [190,48,48], [192,49,49], [194,50,50], [196,51,51], [198,52,52], [201,53,53], [203,54,54], [205,55,55], [207,56,56], [209,56,56], [211,57,57], [213,58,58], [215,59,59], [217,60,60], [219,61,61], [221,62,62], [223,63,63], [225,64,64], [228,64,64], [230,65,65], [232,66,66], [234,67,67], [236,68,68], [238,69,69], [240,70,70], [242,71,71], [244,72,72], [246,72,72], [248,73,73], [250,74,74], [252,75,75], [255,76,76]]
-}   ;
+    };
 
-    $scope.onViewerClick = function(event) {
-        // $scope.viewer.addHandler('canvas-click', function(event) {
-        for(var ov in $scope.selectoverlays){
-            $scope.viewer.removeOverlay($scope.selectoverlays[ov]);
-        }
-        $scope.selectoverlays = [];
-        // The canvas-click event gives us a position in web coordinates.
-        var webPoint = event.position;
+    $scope.compositeOptions = [
+        'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor'
+    ];
 
-        // Convert that to viewport coordinates, the lingua franca of OpenSeadragon coordinates.
-        var viewportPoint = $scope.viewer.viewport.pointFromPixel(webPoint);
-
-        // Convert from viewport coordinates to image coordinates.
-        //var imagePoint = $scope.viewer.TiledImage.viewportToImageCoordinates(viewportPoint);
-
-        // Show the results.
-        var hitfound = false;
-        //console.dir(webPoint);
-        console.dir($scope.viewer.viewport.getBounds());
-        angular.forEach($scope.associations, function(image, imageid){
-            if(hitfound){
-
-                return;
-            }
-            //console.log(imageid);
-            //console.dir(image);
-            var pos = viewportPoint;
-            var box = image.getBounds();
-            var hit = (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width && pos.y < box.y + box.height);
-            if(hit){
-                console.dir(image);
-                hitfound = true;
-                var edges = image.getBounds();
-                console.log(edges);
-                var buffer = 0.2
-                edges.x -= buffer;
-                edges.y -= buffer*0.25;
-                edges.width += buffer;
-                edges.height += buffer*0.25;
-
-                var elt = document.createElement("div");
-                elt.id = "select-overlay"+imageid;
-                $scope.selectoverlays.push(elt.id);
-                elt.className = "infobox";
-                elt.innerHTML = "<h4><span style='color: white'>"+imageid+"</span></h4>";
-                var loc = image.getBounds();
-                loc.x = loc.x - 0.8*buffer;
-                loc.width = 0.9*buffer;
-                loc.height = loc.height / 2;
-                $scope.viewer.addOverlay({
-                    element: elt,
-                    location: loc
-                });
-
-                $scope.viewer.viewport.fitBounds(edges);
-                console.log($scope.viewer.viewport.getBounds());
-
-
-                var elt = document.createElement("div");
-                elt.id = "select-overlay"+imageid;
-                $scope.selectoverlays.push(elt.id);
-                elt.className = "highlight";
-                $scope.viewer.addOverlay({
-                    element: elt,
-                    location: box
-                });
-                console.log(imageid+': '+hit);
-                $scope.associations[imageid].selected = true;
-                $scope.$apply();
-            }
-        });
-        if(hitfound){
-            event.preventDefaultAction = true;
-            event.stopBubbling = true;
-        }
-    }
-
-    $scope.onViewerMove = function(event) {
-        for(var ov in $scope.infooverlays){
-            $scope.viewer.removeOverlay($scope.infooverlays[ov]);
-        }
-        $scope.infooverlays = [];
-        // $scope.viewer.addHandler('canvas-click', function(event) {
-
-        // The canvas-click event gives us a position in web coordinates.
-        var webPoint = event.position;
-
-        // Convert that to viewport coordinates, the lingua franca of OpenSeadragon coordinates.
-        var viewportPoint = $scope.viewer.viewport.pointFromPixel(webPoint);
-
-        //console.log([webPoint, viewportPoint]);
-        // Convert from viewport coordinates to image coordinates.
-        //var imagePoint = $scope.viewer.TiledImage.viewportToImageCoordinates(viewportPoint);
-
-        // Show the results.
-        var hitfound = false;
-        angular.forEach($scope.viewer.world._items, function(image, imageid){
-            if(hitfound){
-                //console.dir(image);
-                return;
-            }
-            //console.log(imageid);
-            //console.dir(image);
-            var pos = viewportPoint;
-            var box = image.getBounds();
-            var hit = (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width && pos.y < box.y + box.height);
-            if(hit){
-                hitfound = true;
-                var elt = document.createElement("div");
-                elt.id = "info-overlay"+imageid;
-                $scope.infooverlays.push(elt.id);
-                elt.className = "infobox";
-                elt.innerHTML = "<h5><span style='color: white'>"+imageid+"</span></h5>";
-                var loc = box;
-                loc.x = loc.x + loc.width/10;
-                loc.width = loc.width / 3;
-                loc.height = loc.height / 3;
-                $scope.viewer.addOverlay({
-                    element: elt,
-                    location: loc
-                });
-                console.log(imageid+': '+hit);
-            }
-        });
-        if(hitfound){
-            event.preventDefaultAction = true;
-            event.stopBubbling = true;
-        }
-    }
-
-
-    //var ovc = $scope.onViewerClick;
-    // $scope.viewer.addViewerInputHook({hooks: [
-    //     {tracker: 'viewer', handler: 'moveHandler', hookHandler: $scope.onViewerMove},
-    //     {tracker: 'viewer', handler: 'clickHandler', hookHandler: $scope.onViewerClick}
-    // ]});
-
-    $scope.rebound = function(cb){
-        $scope.viewer.viewport.fitBounds(new OpenSeadragon.Rect(-10000, -10000, 10000, 10000), true);
-        console.log('rebounding!');
-        cb();
-    }
-
-    //$scope.rebound(function(){});
-
-
-    $scope.zoomout = function(){
-        $scope.viewer.viewport.fitBounds(new OpenSeadragon.Rect(-1, -1, 2, 2), true);
-    }
-    // $scope.images = {
-    //     '76591' :[198.2693375, 17.85726417, 0.3, 8217, 10057],
-    //     '76590' :[198.2381333, 17.81203417, 0.3, 8217, 10057],
-    //     '76589' :[198.2127083, 17.82992472, 0.3, 8217, 10057],
-    //     '76586' :[198.2194375, 17.94030778, 0.3, 8217, 10057],
-    //     '76585' :[198.2328083, 17.92626833, 0.3, 8217, 10057],
-    //     '76584' :[198.2479625, 17.89997889, 0.3, 8217, 10057],
-    //     '76583' :[198.2256583, 17.89136, 0.3, 8217, 10057]
-    // }
-
-    $scope.images = {
-        // '68763' :[298.4472250,	18.56258194, 0.3, 8217, 10062],
-        // '68761' :[298.4620792,	18.60341806, 0.3, 8217, 10062],
-        // '68755' :[298.4601042,	18.60766528, 0.3, 8217, 10062],
-        // '68764' :[298.5025375,	18.52309028, 0.3, 8217, 10062],
-        // '68750' :[298.520200,	18.617455, 0.3, 8217, 10062],
-        // '68754' :[298.5149542,	18.5768919, 0.3, 8217, 10062],
-        // '68756' :[298.5395833,	18.58627444, 0.3, 8217, 10062],
-        // '68753' :[298.5073167,	18.63271, 0.3, 8217, 10062],
-        // '68760' :[298.5092833,	18.62676278, 0.3, 8217, 10062],
-        // '68758' :[298.5224667,	18.61355722, 0.3, 8217, 10062],
-        // '68748' :[298.534950,	18.59011556, 0.3, 8217, 10062],
-        // '68767' :[298.5283333,	18.50608833, 0.3, 8217, 10062],
-        // '68768' :[298.560075,	18.55153, 0.3, 8217, 10062],
-        // '68746' :[298.5117167,	18.58038306, 0.3, 8217, 10062]
-    }
-
-    $scope.lookupName = function(namestr, cb){
-        cb();
-        // $http({
-        //     url : appconf.api_url+'/ajax/resolve?q='+namestr,
-        //     method : 'GET'
-        // }).then(
-        //     function(res){
-        //         cb(res.data);
-        //     },
-        //     function(err){
-        //         console.dir(err);
-        //     });
-    }
-
-    $scope.searchname = '';
-
-    $scope.searchImages = function(cb){
-        $scope.lookupName($scope.searchname, function(data){
+    $scope.getImages = function(cb){
             $http({
-                url : appconf.api_url+'/exposures',
+                //url : appconf.api_url+'/exposures?filter[where][name]=0712_lb_-10.2-03.0_ugr.json',
+                url : appconf.api_url+encodeURI('/exposures?filter={"where": {"id": {"inq": '+$scope.imageids+'}}}'),
+//                url : appconf.api_url+'/exposures?filter[where][and][0][name][like]=M1*&filter[where][and][1][pixelscale][lt]=0.12',
                 method : 'GET'
             }).then(
                 function(res){
                     angular.forEach(res.data, function(value, key){
-                        //console.dir(value);
-                        if(value.name.startsWith('M1')){return}
-                        // var wcs = new WCS.Mapper(value.header);
-                        // console.dir(wcs);
-                        // //var validWCS = wcs.verifyHeader(value.header);
-                        // //console.log(validWCS);
-                        // if(wcs){
-                        //     var testcoords = wcs.pixelToCoordinate("125","200");
-                        //     var testcoords2 = wcs.coordinateToPixel(value.ra0, value.dec0);
-                        //     console.log([value.ra0, value.dec0, testcoords, testcoords2]);
-                        // }
-                        $scope.images[value.id] = [value.ra0, value.dec0, value.pixelscale, value.width, value.height, value.filter, value.header];
+
+                        //$scope.images[value.id] = [value.ra0, value.dec0, value.pixelscale, value.width, value.height, value.filter, value.header];
+                        $scope.images[value.id] = value;
+                        if($scope.pixelscale === undefined){
+                            $scope.pixelscale = value.pixelscale;
+                            $scope.addScalebar();
+                        }
                     });
                     cb();
                 },
                 function(err){
                     console.dir(err);
                 });
-        })
     }
-
-
-    $scope.zero = [];
-    $scope.scalefactor = 0;
-
-    $scope.widthrange = 0;
-    $scope.heightrange = 0;
-
-    $scope.getBoundaries = function(limit) {
-        var ramax = 0;
-        var ramin = 1000;
-        var decmax = -1000;
-        var decmin = 1000;
-
-        var rmaxes = [ramax];
-        var rmins = [ramin];
-        var dmaxes = [decmax];
-        var dmins = [decmin];
-
-        var counter = 0;
-        angular.forEach($scope.images, function(coords, imageid){
-            if(counter > limit){ return }
-            //console.log(coords);
-            var rawidth = (coords[2] * coords[3]) / 3600.0;
-            var decwidth = (coords[2] * coords[4]) / 3600.0;
-            var rmin = coords[0];
-            var rmax = rmin + rawidth;
-            var dmin = coords[1];
-            var dmax = dmin + decwidth;
-            rmaxes.push(rmax);
-            rmins.push(rmin);
-            dmaxes.push(dmax);
-            dmins.push(dmin);
-            counter++;
-        });
-
-        var ramax = Math.max.apply(null,rmaxes);
-        var ramin = Math.min.apply(null,rmins);
-        var decmin = Math.min.apply(null,dmins);
-        var decmax = Math.max.apply(null,dmaxes);
-
-        $scope.zero = [ramin, decmax];
-        //console.log([ramax-ramin, decmax - decmin]);
-
-        $scope.widthrange = (ramax - ramin);
-        $scope.heightrange = (decmax - decmin);
-        //console.log($scope.viewer.viewport.getBounds());
-        //console.log($scope.widthrange, $scope.heightrange);
-        $scope.scalefactor = $scope.widthrange / $scope.heightrange;
-
-        console.log($scope.zero);
-        console.log($scope.scalefactor);
-        console.log('done getting boundaries');
-    }
-
-    $scope.wcs = null;
 
     $scope.scaleImg = function(imageid){
         var image = $scope.images[imageid];
-        // var width = ((image[2] * image[3]) / 3600.0);
-        // var height = ((image[2] * image[4]) / 3600.0);
-        // //console.log([width, height]);
-        //
-        // var posx = ((image[0] - 0.5*width - $scope.zero[0]) * $scope.scalefactor / $scope.widthrange);
-        // var posy = ($scope.zero[1] - (image[1] + 0.5*height)) / $scope.heightrange;
-        // //console.log([posx, posy]);
-        //var pos = new OpenSeadragon.Rect(posx, posy, (width/$scope.widthrange), height / $scope.heightrange);
 
         if($scope.wcs == null) {
-            var h = image[6];
-            $scope.wcs = new WCS.Mapper(h);
+            $scope.wcs = new WCS.Mapper(image.header);
             console.log($scope.wcs);
         }
 
-        var offsets = $scope.wcs.coordinateToPixel(image[0], image[1]);
-        console.log(offsets);
+        var offsets = $scope.wcs.coordinateToPixel(image.ra0, image.dec0);
         var xoffset = offsets.x;
         var yoffset = 0 - offsets.y;
-        var width = image[3];
-        var height = image[4];
         var pos = { x : xoffset,
                     y : yoffset,
-                    width : width,
-                    height : height};
-        //console.log(pos);
+                    width : image.width,
+                    height : image.height};
+
         return pos;
     }
 
-    $scope.getToken = function(etype, eid, cb) {
-        $http({
-            url: '/token/'+etype+'/'+eid
-        }).then(
-            function(res){
-                cb(res.data)
-            },
-            function(err){
-                console.dir(err);
-            });
-    }
+    $scope.addImage = function(imageid, counter){
 
-    $scope.getTokenNew = function(eid, cb) {
+        $scope.getToken(imageid, function(token){
+            var placement = $scope.scaleImg(imageid);
+            console.log(placement);
+            var source = "/imagexdata/imagex/"+imageid+"/image.dzi?at="+token;
+            $scope.viewer.addTiledImage({
+                tileSource: source,
+                index: parseInt(counter),
+                x: placement.x,
+                y: placement.y,
+                width: placement.width,
+                degrees: 0,
+                success: function(event) {
+                    console.log(event.item);
+                    $scope.associations[imageid] = event.item;
+                    $scope.associations[imageid].selected = false;
+                    $scope.associations[imageid].degrees = 0;
+                    $scope.associations[imageid]['x'] = placement.x;
+                    $scope.associations[imageid]['y'] = placement.y;
+                    $scope.associations[imageid]['cmap'] = 'grey_cm';
+                    $scope.viewer.viewport.goHome();
+                }
+            });
+        });
+    };
+
+
+    $scope.getToken = function(eid, cb) {
         $http({
             url: '/tokennew/'+eid
         }).then(
@@ -472,59 +300,27 @@ myapp.controller('ImagexController', function ($scope, $http, appconf) {
 
 
     $scope.addImages = function(){
-        $scope.searchImages(function(){
-            var limit = 60;
-            $scope.getBoundaries(limit);
-            var counter = 0;
-            angular.forEach($scope.images, function(coords, imageid) {
-                if(counter < limit){
-                    $scope.images[imageid].shown = true;
-                    //console.dir(imageid);
-                    $scope.rebound(function(){$scope.addImage(imageid, counter+100)});
-                    //setTimeout(function(){$scope.zoomout();}, 1000);
-                    counter++;
-                }
-            });
+        var counter = 0;
+        angular.forEach($scope.images, function(image, imageid) {
+            if(counter < $scope.limit){
+                $scope.images[imageid].shown = true;
+                $scope.addImage(imageid, counter+100);
+                counter++;
+            }
         });
     }
 
     $scope.clear = function(){
         $scope.images = {};
+        $scope.associations = {};
         $scope.viewer.destroy();
-        $scope.viewer = OpenSeadragon({
-            id: "openseadragon1",
-            preserveViewport: true,
-            crossOriginPolicy: 'Anonymous',
-            prefixUrl: "/public/images/osd_buttons/"
-        });
-
-        $scope.viewer.addViewerInputHook({hooks: [
-            {tracker: 'viewer', handler: 'moveHandler', hookHandler: $scope.onViewerMove},
-            {tracker: 'viewer', handler: 'clickHandler', hookHandler: $scope.onViewerClick}
-        ]});
-
-
+        $scope.createViewer();
     }
-
-    $scope.getCoords = function(imageid){
-        return $scope.images[imageid];
-    }
-
-    $scope.getCenters = function(){
-        $scope.getCenter();
-        console.log($scope.centerRA);
-        return [$scope.centerRA, $scope.centerDEC];
-    }
-
-    $scope.model = {};
-    $scope.associations = {};
-
-    $scope.filters = [];
-    $scope.cmap = 'None';
 
     $scope.colorize = function(cm, tiledImage){
         var cmap = $scope.colormaps[cm];
         if(tiledImage == null){
+            $scope.model.cmap = cm;
             $scope.filters = [{
                 processors: [
                     OpenSeadragon.Filters.COLORMAP(cmap, 128)
@@ -555,41 +351,38 @@ myapp.controller('ImagexController', function ($scope, $http, appconf) {
         });
     };
 
-    $scope.addImage = function(imageid, counter){
-
-        // var id = Math.floor(Math.random() * 10) + 77000
-        //$scope.getToken('reduced',imageid, function(token){
-        $scope.getTokenNew(imageid, function(token){
-            var placement = $scope.scaleImg(imageid);
-            //console.dir(placement);
-            //console.log($scope.viewer.viewport.viewportToViewerElementRectangle(placement));
-            //var source = "https://spitz.sca.iu.edu/odi/tiles/reduced/"+imageid+"/image.dzi?at="+token;
-            var source = "/imagexdata/imagex/"+imageid+"/image.dzi?at="+token;
-            //console.dir(imageid);
-            $scope.viewer.addTiledImage({
-                tileSource: source,
-                index: parseInt(counter),
-                x: placement.x,
-                y: placement.y,
-                width: placement.width,
-                degrees: 0,
-                success: function(event) {
-                    $scope.associations[imageid] = event.item;
-                    $scope.associations[imageid].selected = false;
-                    $scope.associations[imageid].degrees = 0;
-                }
-            });
+    $scope.gridView = function(){
+        if($scope.arrangement == 'grid') return;
+        $scope.arrangement = 'grid';
+        console.log(Object.keys($scope.images).length);
+        var rows = Math.round(Math.sqrt(Object.keys($scope.images).length));
+        console.log("Setting rows to:"+rows);
+        $scope.viewer.world.arrange({
+            rows:       rows,
+            TileSize:   1024,
+            TileMargin: 128,
         });
+        $scope.viewer.viewport.goHome();
+    }
 
-        // $scope.viewer.addTiledImage({
-        //     tileSource: "public/tiles/tiff_15/image.dzi",
-        //     width: 0.1,
-        //     success: $scope.moveImage
-        // });
-        // $scope.getToken();
-    };
+    $scope.wcsView = function(){
+        if($scope.arrangement == 'wcs') return;
+        $scope.arrangement = 'wcs';
+        angular.forEach($scope.associations, function(image, imageid){
+            var placement = $scope.scaleImg(imageid);
+            image.x = placement.x;
+            image.y = placement.y;
+            var pos = new OpenSeadragon.Point(placement.x, placement.y);
+            image.setPosition(pos);
+            image.setWidth(placement.width);
+        });
+        $scope.viewer.viewport.goHome();
+    }
 
-    $scope.visibleImages = [];
+    $scope.reposition = function(image){
+        var newpos = new OpenSeadragon.Point(image.x, image.y);
+        image.setPosition(newpos);
+    }
 
     $scope.deal = function(){
         angular.forEach($scope.associations, function(image, imageid){
@@ -602,69 +395,6 @@ myapp.controller('ImagexController', function ($scope, $http, appconf) {
             setTimeout(function(){image.setPosition(pos); image.setRotation(0);}, Math.random()*3000+1000);
         })
     };
-
-
-    $scope.registerImage = function(imgObj){
-        console.dir(imgObj.item);
-
-        console.dir($scope.viewer.world.getIndexOfItem(imgObj.item));
-        var idx = $scope.viewer.world.getIndexOfItem(imgObj.item);
-        console.dir($scope.associations[idx]);
-        var edges = imgObj.item.getBounds();
-        //console.dir(imgObj.item);
-        var pos = new OpenSeadragon.Point(edges.x, edges.y);
-        var tmppos = new OpenSeadragon.Point(-100000, -100000);
-        var obj = imgObj.item;
-        obj.setPosition(tmppos);
-        var hidden = false;
-        for(var i in $scope.visibleImages){
-            var r2 = $scope.visibleImages[i];
-            var overlap = $scope.getOverlap(edges, r2);
-            //console.log(overlap);
-            if(overlap && overlap.fracr1 > 0.95){
-                console.log(overlap);
-                imgObj.item.setOpacity(0);
-                hidden = true;
-                console.log('Hidden!');
-                break;
-            }
-        }
-        if(!hidden){
-            $scope.visibleImages.push(edges);
-        }
-        setTimeout(function(){obj.setPosition(pos)}, Math.random()*2000);
-
-    };
-
-    $scope.getOverlap = function(r1, r2){
-
-        if(r1.x > r2.x + r2.width || r2.x > r1.x + r1.width || r1.y > r2.y + r2.height || r2.y > r1.y + r1.height) {
-            return null;
-        }
-
-        var r1area = (r1.x + r1.width) * (r1.y + r1.height);
-        var r2area = (r2.x + r2.width) * (r2.y + r2.height);
-
-        var overlap = {
-            x: Math.max(r1.x, r2.x),
-            y: Math.max(r1.y, r2.y),
-            width: Math.min(r1.x + r1.width, r2.x + r2.width) - Math.max(r1.x, r2.x),
-            height: Math.min(r1.y + r1.height, r2.y + r2.height) - Math.max(r1.y, r2.y),
-            fracr1: 0,
-            fracr2: 0
-        };
-
-        var oarea = (overlap.x + overlap.width) * (overlap.y + overlap.height);
-
-        overlap.fracr1 = oarea / r1area;
-        overlap.fracr2 = oarea / r2area;
-
-        return overlap;
-
-    }
-
-    $scope.overlays = [];
-
 
 });
 
@@ -705,7 +435,8 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
         $http.delete(appconf.api_url+"/processes/"+proc.id).
         then(function(res) {
             $interval.cancel(promise);
-            delete $scope.curr_proc(proc);
+            var index = $scope.curr_proc.indexOf(proc);
+            $scope.curr_proc.splice(index, 1);
             toaster.pop('success', '', "Active Process Removed");
         })
     }

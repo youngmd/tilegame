@@ -12,7 +12,8 @@ var myapp = angular.module('myapp', [
     'angular-jwt',
     'ui.bootstrap',
     'ui.gravatar',
-    'ui.select'
+    'ui.select',
+    'rzModule'
 ]);
 
 myapp.factory('AuthService', function(appconf, $http) {
@@ -123,45 +124,60 @@ myapp.filter('limitObjectTo', function() {
     };
 });
 
+// myapp.directive('imagexviewer', function() {
+//    return {
+//        restrict: "E",
+//        replace: true,
+//        transclude: true,
+//        scope: {
+//            ixid: '@',
+//            pixelscale: '@'
+//        },
+//        template: "<div id=\"{{ixid}}\" class=\"openseadragon\" style=\"height: 400px;\"></div>",
+//        controller: ['$scope', '$timeout', 'appconf', 'TokenService', function ($scope, $timeout, appconf, TokenService) {
+//
+//            $timeout(function(){
+//                TokenService.get($scope.ixid, function(at){
+//                    console.log($scope.ixid);
+//                    $scope.viewer = OpenSeadragon({
+//                        id: $scope.ixid,
+//                        prefixUrl: "/public/images/osd_buttons/",
+//                        tileSources: "/imagexdata/imagex/"+$scope.ixid+"/image.dzi?at="+at
+//                    });
+//
+//                    $scope.viewer.scalebar({
+//                        type: OpenSeadragon.ScalebarType.MAP,
+//                        sizeAndTextRenderer: OpenSeadragon.ScalebarSizeAndTextRenderer.ASTRONOMY,
+//                        pixelsPerMeter: (1 / parseFloat($scope.pixelscale)),
+//                        location: OpenSeadragon.ScalebarLocation.BOTTOM_LEFT,
+//                        xOffset: 5,
+//                        yOffset: 10,
+//                        minWidth: "75px",
+//                        stayInsideImage: false,
+//                        color: "rgb(100, 100, 100)",
+//                        fontColor: "rgb(100, 100, 100)",
+//                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+//                        fontSize: "small",
+//                        barThickness: 2
+//                    });
+//                });
+//            });
+//        }]
+//     };
+//});
+
 myapp.directive('imagexviewer', function() {
-   return {
-       restrict: "E",
-       replace: true,
-       transclude: true,
-       scope: {
-           ixid: '@',
-           pixelscale: '@'
-       },
-       template: "<div id=\"{{ixid}}\" class=\"openseadragon\" style=\"height: 400px;\"></div>",
-       controller: ['$scope', '$timeout', 'appconf', 'TokenService', function ($scope, $timeout, appconf, TokenService) {
-
-           $timeout(function(){
-               TokenService.get($scope.ixid, function(at){
-                   console.log($scope.ixid);
-                   $scope.viewer = OpenSeadragon({
-                       id: $scope.ixid,
-                       prefixUrl: "/public/images/osd_buttons/",
-                       tileSources: "/imagexdata/imagex/"+$scope.ixid+"/image.dzi?at="+at
-                   });
-
-                   $scope.viewer.scalebar({
-                       type: OpenSeadragon.ScalebarType.MAP,
-                       sizeAndTextRenderer: OpenSeadragon.ScalebarSizeAndTextRenderer.ASTRONOMY,
-                       pixelsPerMeter: (1 / parseFloat($scope.pixelscale)),
-                       location: OpenSeadragon.ScalebarLocation.BOTTOM_LEFT,
-                       xOffset: 5,
-                       yOffset: 10,
-                       minWidth: "75px",
-                       stayInsideImage: false,
-                       color: "rgb(100, 100, 100)",
-                       fontColor: "rgb(100, 100, 100)",
-                       backgroundColor: "rgba(255, 255, 255, 0.9)",
-                       fontSize: "small",
-                       barThickness: 2
-                   });
-               });
-           });
-       }]
+    return {
+        restrict: "E",
+        replace: true,
+        transclude: true,
+        scope: {
+            ixid: '@',
+            imageids: '@',
+            ixheight: '@'
+        },
+        templateUrl: "t/imagex.html",
+        controller: 'ImagexController'
     };
 });
 
@@ -186,6 +202,64 @@ myapp.directive('navbar', function() {
                 });
             }
         }]
+    };
+});
+
+myapp.directive("colormap", function() {
+    return {
+        restrict: "A",
+        scope: {
+            cmap: '=cmap',
+            width: '@',
+            height: '@',
+            label: '@'
+        },
+        link: function (scope, element, attrs) {
+
+            var tmp_cmap = scope.cmap.slice(0);
+            var center = 128;
+            var diff = 255 - center;
+            for(i = 0; i < 256; i++) {
+                if(i > center){
+                    var offset = i - center;
+                    var ratio = offset / diff;
+                    var position = Math.min(ratio * 128 + 128,255)|0;
+                }else{
+                    var ratio = center / 128;
+                    var position = Math.max(0,i/ratio,0)|0;
+                }
+                tmp_cmap[i] = scope.cmap[position];
+            }
+
+            var width = scope.width;
+            var height = scope.height;
+            var canvas = document.createElement('canvas');
+            var label = document.createTextNode(scope.label);
+
+            var ctx = canvas.getContext('2d');
+            canvas.id = 'canvas';
+            canvas.width = width;
+            canvas.height = height;
+
+            element[0].appendChild(canvas);
+            element[0].appendChild(label);
+
+            var step = canvas.width / 256;
+            var distance = 0;
+
+
+            for(var i = 0; i < 256; i++){
+                var value = tmp_cmap[i];
+                ctx.strokeStyle = "rgb("+value[0]+","+value[1]+","+value[2]+")";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(distance,0);
+                ctx.lineTo(distance,canvas.height);
+                ctx.stroke();
+                distance = distance + step;
+            }
+
+        }
     };
 });
 

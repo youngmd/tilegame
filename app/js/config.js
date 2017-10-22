@@ -18,8 +18,9 @@ angular.module('app.config', [])
     user: 'ix_user',
 
     api_url: '/imagex-api/api',
-    jwt_whitelist: ['imagex.sca.iu.edu'] //list of domains to allow jwtInterceptor to send jwt to
+    jwt_whitelist: ['imagex.sca.iu.edu'], //list of domains to allow jwtInterceptor to send jwt to
 
+    tile_load_limit: 60
     });
 
 
