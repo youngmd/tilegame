@@ -174,7 +174,9 @@ myapp.directive('imagexviewer', function() {
         scope: {
             ixid: '@',
             imageids: '@',
-            ixheight: '@'
+            ixheight: '@',
+            arrangement: '@',
+            onload: '&onload'
         },
         templateUrl: "t/imagex.html",
         controller: 'ImagexController'
@@ -276,11 +278,11 @@ myapp.directive('modalDialog', function() {
         template:
         "<div>" +
         "<div class='modal-header'>" +
-        "<h3 ng-bind='dialogTitle'></h3>" +
-        "<div ng-click='cancel()'>X</div>" +
+        "<button type='button' class='close' data-dismiss='cancel' ng-click='cancel()' aria-label='Close'><span aria-hidden='true'>&times;</span></button>"+
+        "<h3 class='modal-title' ng-bind='dialogTitle'></h3>" +
         "</div>" +
         "<div class='modal-body' ng-transclude></div>" +
-        "</div>"
+        "</div"
     };
 });
 
@@ -318,9 +320,9 @@ myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
             requiresLogin: true,
             requiresAdmin: true
         })
-        .when('/imagex', {
-            templateUrl: 't/imagex.html',
-            controller: 'ImagexController',
+        .when('/demo', {
+            templateUrl: 't/demo.html',
+            controller: 'DemoController',
             requiresLogin: true
         })
         .otherwise({

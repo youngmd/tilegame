@@ -38,7 +38,7 @@
     position:absolute;
     bottom:0; right:0;
     margin-bottom: 10px;
-    margin-right: 10px;
+    margin-right: 25px;
     z-index:1;
 }
 
@@ -90,4 +90,28 @@ other selectors that are more specific or come later and might alter display.
 */
 [ng\:cloak], [ng-cloak], .ng-cloak {
     display: none !important;
+}
+
+html, body, .container-fluid, .row {
+    height: 100%;
+}
+
+.main-container {
+    margin-top: 45px;
+}
+
+.sidebar {
+    background-color: #CCCCCC;
+}
+
+@media (min-width: 992px) {
+    .sidebar {
+        position: fixed;
+        top: 45px;
+        left: 0;
+        bottom: 0;
+        z-index: 1000;
+        display: block;
+        background-color: #CCCCCC;
+    }
 }

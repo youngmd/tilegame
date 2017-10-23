@@ -4,6 +4,8 @@
   "description": "ImageX UI Demonstrator",
   "main": "server.js",
   "author": "Michael Young",
+  "repository": "https://github.com/IUSCA/imagex-ui",
+  "license": "MIT",
   "dependencies": {
     "angular": "^1.6.5",
     "angular-animate": "^1.6.5",

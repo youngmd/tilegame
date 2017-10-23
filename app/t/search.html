@@ -1,7 +1,7 @@
 <navbar title="{{title}}" active="search" loggedin="true" username="{{username}}"></navbar>
 
 <div class="header">
-    <div class="container">
+    <div class="container-fluid main-container">
         <h2>Search</h2>
     </div>
 </div>
@@ -50,7 +50,7 @@
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-10">
                     <button class="btn btn-info" ng-click="getexposures()">Get Images</button>
-                    <a type="button" ng-show="selected > 0" class="btn btn-success" ng-click="download()"><i class="fa fa-fw fa-eye"></i> View Selected</a>
+                    <a type="button" ng-show="selected > 1" class="btn btn-success" ng-click="viewSelected()"><i class="fa fa-fw fa-eye"></i> View Selected</a>
 
                 </div>
             </div>
@@ -87,7 +87,7 @@
             <td><i class="fa fa-fw fa-file text-info" ng-click="infodump($index); $event.stopPropagation();"></i></td>
         </tr>
         <tr ng-repeat-end ng-show="showdiv">
-            <td colspan="5">
+            <td colspan="7">
                 <imagexviewer imageids='{{[exposure.id]}}' ixid="{{exposure.id}}" ixheight=500 ng-if="showdiv"></imagexviewer>
             </td>
         </tr>

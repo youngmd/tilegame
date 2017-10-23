@@ -14,7 +14,11 @@ var logger = new winston.Logger(config.logger.winston);
 
 var storage = multer.diskStorage({ //multers disk storage settings
     destination: function (req, file, cb) {
-        cb(null, './uploads/')
+        var dir = './uploads/'+req.params.group;
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+        cb(null, dir);
     },
     filename: function (req, file, cb) {
         //var datetimestamp = Date.now();
@@ -58,8 +62,6 @@ function imagex_jwt(paths, cb){
 
 module.exports = function (app) {
 
-
-
     app.use('/node_modules', express.static(path.join(__dirname, '/../node_modules')));
     app.use('/js', express.static(path.join(__dirname, 'js')));
     app.use('/t', express.static(path.join(__dirname, 't')));
@@ -67,7 +69,7 @@ module.exports = function (app) {
 
 
     /** API path that will upload the files */
-    app.post('/upload', function(req, res) {
+    app.post('/upload/:group', function(req, res) {
         upload(req,res,function(err){
             if(err){
                 res.json({error_code:1,err_desc:err});

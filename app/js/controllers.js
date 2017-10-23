@@ -20,7 +20,7 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
         dec: '',
         radius: 1.0,
         radscale: 'degree'
-    }
+    };
 
     $scope.getexposures = function() {
         $scope.selected = 0;
@@ -47,8 +47,8 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
         // console.log(searchObj);
 
         var searchStr = "/exposures?";
-        if($scope.searchform.filename != ''){
-            searchStr = searchStr + "filter[where][name][like]="+$scope.searchform.filename+"*"
+        if($scope.searchform.filename !== ''){
+            searchStr = searchStr + "filter[where][name][like]="+$scope.searchform.filename+"*";
         }
         var url = appconf.api_url+searchStr;
         console.log(url);
@@ -56,10 +56,10 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
         then(function(res) {
             $scope.exposures = res.data;
             angular.forEach($scope.exposures, function(value, key) {
-                $scope.exposures[key]['selected'] == false;
-            })
+                value.selected = false;
+            });
         });
-    }
+    };
 
 
     $scope.selectall = false;
@@ -83,57 +83,72 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
         $scope.selected = 0;
         angular.forEach($scope.exposures, function(value, key) {
             if($scope.exposures[key]['selected']) { $scope.selected++;}
-        })
+        });
+    };
+
+    $scope.viewSelected = function() {
+        var exposures = [];
+        angular.forEach($scope.exposures, function(value, key) {
+            if(value.selected) { exposures.push(value.id); }
+        });
+        $modal.open({
+            templateUrl: 't/imagexmodal.html', // loads the template
+            backdrop: true, // setting backdrop allows us to close the modal window on clicking outside the modal window
+            windowClass: 'modal', // windowClass - additional CSS class(es) to be added to a modal window template
+            size: 'lg',
+            controller: function ($scope, $modalInstance) {
+                $scope.exposures = exposures;
+                $scope.dialogTitle = "Selected Images";
+                $scope.size = 'lg';
+                $scope.cancel = function () {
+                    $modalInstance.dismiss('cancel');
+                };
+            },
+            resolve: {}
+        });//end of modal.open
     };
 
 
     $scope.infodump = function (expid) {
 
         var info = $scope.exposures[expid]['header'];
-        var exp = $scope.exposures[expid]['name']
+        var exp = $scope.exposures[expid]['name'];
         $modal.open({
             templateUrl: 't/infodump.html', // loads the template
             backdrop: true, // setting backdrop allows us to close the modal window on clicking outside the modal window
             windowClass: 'modal', // windowClass - additional CSS class(es) to be added to a modal window template
             controller: function ($scope, $modalInstance) {
                 $scope.items = info;
-                $scope.title = "Metadata for " + exp;
+                $scope.dialogTitle = "Metadata for " + exp;
                 $scope.cancel = function () {
                     $modalInstance.dismiss('cancel');
                 };
             },
-            resolve: {
-                user: function () {
-                    return $scope.user;
-                }
-            }
+            resolve: {}
         });//end of modal.open
     }; // end of scope.open functionnd of scope.open function
 
 });
 
-
-myapp.controller('ActivityController', function ($scope, $http) {
+myapp.controller('ImagexController', function ($scope, $http, $timeout, $interval, appconf) {
     $scope.title = "ImageX";
-    $scope.processes = [];
-});
-
-myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf) {
-    $scope.title = "ImageX";
-    $scope.pixelscale;
+    $scope.pixelscale = undefined;
     $scope.infooverlay = true;
     $scope.model = {
         infocoords: [],
-        cmap: 'grey_cm'
+        cmap: 'grey_cm',
+        multi: false
     };
+
+    $scope.model.multi = (JSON.parse($scope.imageids).length > 1);
     $scope.images = {};
     $scope.wcs = null;
     $scope.scalebar = true;
-    $scope.arrangement = 'wcs';
-    $scope.viewer;
+    $scope.arrangement = ($scope.arrangment === undefined) ? 'wcs' : $scope.arrangement;
+    $scope.viewer = undefined;
     $scope.associations = {};
     $scope.filters = [];
-    $scope.limit = (appconf.tile_load_limit != undefined) ? appconf.tile_load_limit : 50;
+    $scope.limit = (appconf.tile_load_limit !== undefined) ? appconf.tile_load_limit : 50;
 
     $scope.createViewer = function() {
         $scope.viewer = OpenSeadragon({
@@ -153,16 +168,12 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
     $scope.onViewerMove = function(event) {
         var viewportPoint = $scope.viewer.viewport.pointFromPixel(event.position);
 
-        if($scope.wcs != null){
+        if($scope.wcs !== null){
             $scope.model.infocoords = $scope.wcs.pixelToCoordinate([viewportPoint.x, viewportPoint.y]);
             $scope.$apply();
         }
     };
 
-    $timeout(function () {
-        //DOM has finished rendering
-        $scope.createViewer(); //need to run this after declaring hookHandler functions;
-    });
 
     $scope.addScalebar = function(){
         $scope.viewer.scalebar({
@@ -215,7 +226,7 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
         'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor'
     ];
 
-    $scope.getImages = function(cb){
+    $scope.getImages = function(cb, cb2){
             $http({
                 //url : appconf.api_url+'/exposures?filter[where][name]=0712_lb_-10.2-03.0_ugr.json',
                 url : appconf.api_url+encodeURI('/exposures?filter={"where": {"id": {"inq": '+$scope.imageids+'}}}'),
@@ -232,12 +243,12 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
                             $scope.addScalebar();
                         }
                     });
-                    cb();
+                    cb(cb2);
                 },
                 function(err){
                     console.dir(err);
                 });
-    }
+    };
 
     $scope.scaleImg = function(imageid){
         var image = $scope.images[imageid];
@@ -256,13 +267,12 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
                     height : image.height};
 
         return pos;
-    }
+    };
 
     $scope.addImage = function(imageid, counter){
 
         $scope.getToken(imageid, function(token){
             var placement = $scope.scaleImg(imageid);
-            console.log(placement);
             var source = "/imagexdata/imagex/"+imageid+"/image.dzi?at="+token;
             $scope.viewer.addTiledImage({
                 tileSource: source,
@@ -296,10 +306,10 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
             function(err){
                 console.dir(err);
             });
-    }
+    };
 
 
-    $scope.addImages = function(){
+    $scope.addImages = function(cb){
         var counter = 0;
         angular.forEach($scope.images, function(image, imageid) {
             if(counter < $scope.limit){
@@ -308,14 +318,15 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
                 counter++;
             }
         });
-    }
+        cb();
+    };
 
     $scope.clear = function(){
         $scope.images = {};
         $scope.associations = {};
         $scope.viewer.destroy();
         $scope.createViewer();
-    }
+    };
 
     $scope.colorize = function(cm, tiledImage){
         var cmap = $scope.colormaps[cm];
@@ -326,7 +337,11 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
                     OpenSeadragon.Filters.COLORMAP(cmap, 128)
                 ]
             }];
+            angular.forEach($scope.associations, function(value, key){
+               value.cmap = cm;
+            });
         } else {
+            tiledImage.cmap = cm;
             var found = false;
             for (var i = 0; i < $scope.filters.length; i++) {
                 var f = $scope.filters[i];
@@ -352,7 +367,7 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
     };
 
     $scope.gridView = function(){
-        if($scope.arrangement == 'grid') return;
+        //if($scope.arrangement == 'grid') return;
         $scope.arrangement = 'grid';
         console.log(Object.keys($scope.images).length);
         var rows = Math.round(Math.sqrt(Object.keys($scope.images).length));
@@ -363,10 +378,10 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
             TileMargin: 128,
         });
         $scope.viewer.viewport.goHome();
-    }
+    };
 
     $scope.wcsView = function(){
-        if($scope.arrangement == 'wcs') return;
+        //if($scope.arrangement == 'wcs') return;
         $scope.arrangement = 'wcs';
         angular.forEach($scope.associations, function(image, imageid){
             var placement = $scope.scaleImg(imageid);
@@ -377,12 +392,12 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
             image.setWidth(placement.width);
         });
         $scope.viewer.viewport.goHome();
-    }
+    };
 
     $scope.reposition = function(image){
         var newpos = new OpenSeadragon.Point(image.x, image.y);
         image.setPosition(newpos);
-    }
+    };
 
     $scope.deal = function(){
         angular.forEach($scope.associations, function(image, imageid){
@@ -393,8 +408,64 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, appconf)
             image.setPosition(tmppos);
             image.setRotation(tmprot);
             setTimeout(function(){image.setPosition(pos); image.setRotation(0);}, Math.random()*3000+1000);
-        })
+        });
     };
+
+    $scope.blink = function(delay){
+        var imglist = [];
+        angular.forEach($scope.associations, function(image, imageid) {
+            if(imglist.length != 0) image.opacity = 0;
+            imglist.push(imageid);
+        });
+
+        var iterator = 0;
+        var blinker = $interval(function(){
+            var prev_img = $scope.associations[imglist[iterator]];
+            if(iterator < (imglist.length - 1)) {
+                iterator = iterator + 1;
+            } else {
+                iterator = 0;
+            }
+
+            var curr_img = $scope.associations[imglist[iterator]];
+            prev_img.opacity = 0;
+            curr_img.opacity = 1;
+            $scope.viewer.forceRedraw();
+
+        }, delay);
+
+        $scope.$on('$routeChangeStart',function(){
+            $interval.cancel(blinker);
+        });
+    };
+
+
+    $timeout(function () {
+        //DOM has finished rendering
+        $scope.createViewer(); //need to run this after declaring hookHandler functions;
+        $scope.getImages($scope.addImages, function(){
+            $timeout(function() {
+                if($scope.arrangement === 'grid'){
+                    $scope.gridView();
+                }
+                var postops = $scope.onload();
+                if(postops === undefined) return;
+                if(postops.all !== undefined) {
+                    if(postops.all.deal !== undefined) $scope.deal();
+                    if(postops.all.blink !== undefined) $scope.blink(postops.all.blink);
+                    if(postops.all.cmap !== undefined) $scope.colorize(postops.all.cmap, null);
+                }
+                angular.forEach($scope.associations, function(image, imageid){
+                    var ops = postops[imageid];
+                    if(ops === undefined) return;
+                    angular.forEach(ops, function(value, opname){
+                        if(opname === 'cmap') $scope.colorize(value, image);
+                    });
+                });
+            }, 1000);
+        });
+
+    });
 
 });
 
@@ -403,7 +474,6 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
 
     $scope.comp_proc = {};
     $scope.curr_proc = {};
-    $scope.pend_proc = {};
 
 
     $scope.getStatus = function(pid){
@@ -507,12 +577,11 @@ myapp.controller('ActivityController', function ($scope, $http, $interval, $root
                 console.log('checking for new processes');
             }, 5000);
 
-    $scope.$on('$destroy',function(){
+    $scope.$on('$routeChangeStart',function(){
         if(promise)
             $interval.cancel($scope.watchers['checkForNew']);
     });
 });
-
 
 myapp.controller('SigninController', function ($scope, $http, $location, toaster, appconf, AuthService) {
 
@@ -530,9 +599,9 @@ myapp.controller('SigninController', function ($scope, $http, $location, toaster
                 if (res) {
                     var redirect = sessionStorage.getItem('auth_redirect');
                     if (redirect == "" || redirect == undefined) redirect = appconf.auth_redirect_url;
-                    toaster.pop('success', 'Redirect', "Redirecting to " + redirect);
+                    // toaster.pop('success', 'Redirect', "Redirecting to " + redirect);
                     AuthService.getRoles(function(res) {
-                        toaster.pop('success', 'Roles', res);
+                        // toaster.pop('success', 'Roles', res);
                         $location.path(redirect);
                     });
                 } else {
@@ -574,72 +643,172 @@ myapp.controller('UserController', function ($scope, $http, $location, toaster, 
 
 });
 
-
-myapp.controller('UploadController', function ($scope, $http, FileUploader, toaster, appconf) {
+myapp.controller('UploadController', function ($scope, $http, FileUploader, toaster, appconf, AuthService) {
     $scope.title = "ImageX";
+    $scope.uploader = undefined;
 
-    $scope.rows = [];
-    var uploader = $scope.uploader = new FileUploader({
-        url: 'upload'
+    $scope.renderupload = false;
+    AuthService.getRoles(function(roles){
+        $scope.roles = roles;
+
+
+        var uploader = $scope.uploader = new FileUploader({
+            url: 'upload/'+$scope.roles[0]
+        });
+
+        // FILTERS
+
+        uploader.filters.push({
+            name: 'syncFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options) {
+                console.log('syncFilter');
+                return this.queue.length < 10;
+            }
+        });
+
+        // an async filter
+        uploader.filters.push({
+            name: 'asyncFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options, deferred) {
+                console.log('asyncFilter');
+                setTimeout(deferred.resolve, 1e3);
+            }
+        });
+
+        // CALLBACKS
+
+        uploader.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
+            console.info('onWhenAddingFileFailed', item, filter, options);
+            toaster.pop('error','Invalid Filetype','Please add a valid FITS or .fz compressed file')
+        };
+        uploader.onAfterAddingFile = function(fileItem) {
+            console.info('onAfterAddingFile', fileItem);
+        };
+        uploader.onAfterAddingAll = function(addedFileItems) {
+            console.info('onAfterAddingAll', addedFileItems);
+        };
+        uploader.onBeforeUploadItem = function(item) {
+            console.info('onBeforeUploadItem', item);
+        };
+        uploader.onProgressItem = function(fileItem, progress) {
+            console.info('onProgressItem', fileItem, progress);
+        };
+        uploader.onProgressAll = function(progress) {
+            console.info('onProgressAll', progress);
+        };
+        uploader.onSuccessItem = function(fileItem, response, status, headers) {
+            console.info('onSuccessItem', fileItem, response, status, headers);
+        };
+        uploader.onErrorItem = function(fileItem, response, status, headers) {
+            console.info('onErrorItem', fileItem, response, status, headers);
+        };
+        uploader.onCancelItem = function(fileItem, response, status, headers) {
+            console.info('onCancelItem', fileItem, response, status, headers);
+        };
+        uploader.onCompleteItem = function(fileItem, response, status, headers) {
+            console.info('onCompleteItem', fileItem, response, status, headers);
+            $scope.rows = response.data;
+        };
+        uploader.onCompleteAll = function() {
+            console.info('onCompleteAll');
+        };
+
+        $scope.renderupload = true;
     });
 
-    // FILTERS
 
-    uploader.filters.push({
-        name: 'syncFilter',
-        fn: function(item /*{File|FileLikeObject}*/, options) {
-            console.log('syncFilter');
-            return this.queue.length < 10;
-        }
-    });
+});
 
-    // an async filter
-    uploader.filters.push({
-        name: 'asyncFilter',
-        fn: function(item /*{File|FileLikeObject}*/, options, deferred) {
-            console.log('asyncFilter');
-            setTimeout(deferred.resolve, 1e3);
-        }
-    });
+myapp.controller('DemoController', function($scope, $http, $compile, appconf, toaster){
+    $scope.ixids = undefined;
+    $scope.ixid = undefined;
 
-    // CALLBACKS
 
-    uploader.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
-        console.info('onWhenAddingFileFailed', item, filter, options);
-        toaster.pop('error','Invalid Filetype','Please add a valid FITS or .fz compressed file')
-    };
-    uploader.onAfterAddingFile = function(fileItem) {
-        console.info('onAfterAddingFile', fileItem);
-    };
-    uploader.onAfterAddingAll = function(addedFileItems) {
-        console.info('onAfterAddingAll', addedFileItems);
-    };
-    uploader.onBeforeUploadItem = function(item) {
-        console.info('onBeforeUploadItem', item);
-    };
-    uploader.onProgressItem = function(fileItem, progress) {
-        console.info('onProgressItem', fileItem, progress);
-    };
-    uploader.onProgressAll = function(progress) {
-        console.info('onProgressAll', progress);
-    };
-    uploader.onSuccessItem = function(fileItem, response, status, headers) {
-        console.info('onSuccessItem', fileItem, response, status, headers);
-    };
-    uploader.onErrorItem = function(fileItem, response, status, headers) {
-        console.info('onErrorItem', fileItem, response, status, headers);
-    };
-    uploader.onCancelItem = function(fileItem, response, status, headers) {
-        console.info('onCancelItem', fileItem, response, status, headers);
-    };
-    uploader.onCompleteItem = function(fileItem, response, status, headers) {
-        console.info('onCompleteItem', fileItem, response, status, headers);
-        $scope.rows = response.data;
-    };
-    uploader.onCompleteAll = function() {
-        console.info('onCompleteAll');
+    $scope.demos = {
+        '3color' : {
+            title: 'True Color Image',
+            ixids: ['59ed00f4327cd50010741ef4','59ed01cb327cd50010741ef6','59ed02c8327cd50010741ef8'],
+            img: 'public/images/demo/3color.png',
+            arrangement: 'grid',
+            onload: function(){
+               return {
+                   '59ed00f4327cd50010741ef4': {cmap:'green_cm'},
+                   '59ed01cb327cd50010741ef6': {cmap:'red_cm'},
+                   '59ed02c8327cd50010741ef8': {cmap:'blue_cm'}
+               }
+            }
+        },
+        'night' : {
+            title: "Multi-extension",
+            ixids: [],
+            arrangment: 'wcs',
+            img: 'public/images/demo/grid.png',
+            onload: function(){
+                return {}
+            }
+        },
+        'animate' : {
+            title: "Rotation and Position",
+            ixids: [],
+            arrangment: 'wcs',
+            img: 'public/images/demo/telescope.png',
+            onload: function(){
+                return {
+                    all : {
+                        deal : null,
+                        cmap : 'bb_cm',
+                        composite : 'source-over'
+                    }
+                }
+            }
+        },
+        'blink' : {
+            title: 'Blink',
+            ixids: ['59ed00f4327cd50010741ef4','59ed01cb327cd50010741ef6','59ed02c8327cd50010741ef8'],
+            img: 'public/images/demo/blink.png',
+            arrangement: 'wcs',
+            onload: function(){
+                return {
+                    all : {
+                        blink : 800,
+                        composite : 'source-over'
+                    }
+                }
+            }
+        },
     };
 
-    console.dir('uploader', uploader);
+    $scope.populate = function(){
+        $http({
+            url : appconf.api_url+encodeURI('/exposures?filter={"where": {"name": {"like": "0712*"}}}'),
+            method : 'GET'
+        }).then(
+            function(res){
+                angular.forEach(res.data, function(value, key){
 
+                    //$scope.images[value.id] = [value.ra0, value.dec0, value.pixelscale, value.width, value.height, value.filter, value.header];
+                    $scope.demos.night.ixids.push(value.id);
+                    $scope.demos.animate.ixids.push(value.id);
+                });
+            },
+            function(err){
+                console.dir(err);
+            });
+    };
+
+    $scope.populate();
+
+    $scope.onload = undefined;
+    $scope.launchDemo = function(demoId){
+        angular.element($("#demoTarget")).empty();
+        var demo = $scope.demos[demoId];
+        $scope.ixids = demo.ixids;
+        $scope.ixid = demoId;
+        $scope.onload = demo.onload;
+        $scope.arrangement = demo.arrangement;
+        var demoStr = "<imagexviewer imageids='{{ixids}}' ixid='{{ixid}}' ixheight=500 arrangement='{{arrangement}}' onload='onload()'></imagexviewer>";
+        var ix = $compile( demoStr )( $scope );
+
+        angular.element($("#demoTarget")).append(ix);
+    };
 });
