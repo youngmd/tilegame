@@ -9,7 +9,7 @@ lib-cov
 *.pub
 *.key
 *.fits
-
+*.DS_Store
 pids
 logs
 results

@@ -1,0 +1,20 @@
+<navbar title="{{title}}" active="upload"></navbar>
+<div class="container-fluid main-container">
+
+    <div class="row">
+        <div class="col-md-2 sidebar">
+            <br>
+            <div class="list-group">
+                <a class="list-group-item" ng-repeat="(id, d) in demos" ng-click="launchDemo(id)">
+                    <img class="smallbtnicon" src="{{d.img}}"> {{d.title}}
+                </a>
+            </div>
+            
+        </div>
+
+        <div id="demoTarget" class="col-md-10 col-md-offset-2 content" style="margin-top: 40px">
+        </div>
+
+    </div>
+    
+</div>
