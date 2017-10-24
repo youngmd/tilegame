@@ -16,7 +16,7 @@
                     <li ng-class="{'active': active == 'search'}"><a href="/#!/search">Search</a></li>
                     <li ng-class="{'active': active == 'demo'}"><a href="/#!/demo">Demo</a></li>
                     <li ng-class="{'active': active == 'activity'}"><a href="/#!/activity" ng-show="user.roles.indexOf('admin')!=-1">Progress</a></li>
-                    <li ng-class="{'active': active == 'upload'}"><a href="/#!/upload">Upload</a></li>
+                    <li ng-class="{'active': active == 'upload'}"><a href="/#!/upload" ng-show="user.roles.indexOf('admin')!=-1">Upload</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li class="dropdown">
