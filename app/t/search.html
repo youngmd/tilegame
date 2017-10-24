@@ -12,40 +12,36 @@
         <fieldset>
 
             <div class="form-group">
-                <label class="col-md-4 control-label">Filename</label>
-                <div class="col-md-4">
+                <label class="col-md-4 control-label">Object</label>
+                <div class="col-md-4 col-sm-6"">
                     <div class="input-group">
-                        <input type="text" class="form-control" ng-model="searchform.filename" placeholder="filename"/>
+                        <input type="text" class="form-control" ng-model="searchform.object" placeholder="object"/>
                     </div>
                 </div>
             </div>
 
-            <!--<div class="form-group">-->
-                <!--<label class="col-md-4 control-label">Search Header Key</label>-->
-                <!--<div class="col-md-4">-->
-                    <!--<div class="input-group">-->
-                        <!--<input type="text" class="form-control" ng-model="headerkey" placeholder="CAL-OBS"/>-->
-                    <!--</div>-->
-                <!--</div>-->
-            <!--</div>-->
+            <div class="form-group">
+                <label class="col-md-4 control-label">Filter</label>
+                <div class="col-md-4 col-sm-6"">
+                    <div class="input-group">
+                        <input type="text" class="form-control" ng-model="searchform.filter" placeholder="sdss_g"/>
+                    </div>
+                </div>
+            </div>
 
-            <!--<div class="form-group">-->
-                <!--<label class="col-md-4 control-label">Search Operator</label>-->
-                <!--<div class="col-md-4">-->
-                    <!--<div class="input-group">-->
-                        <!--<input type="text" class="form-control" ng-model="searchop" placeholder="[gt|lt|eq]"/>-->
-                    <!--</div>-->
-                <!--</div>-->
-            <!--</div>-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="exptime">Observation Date</label>
+                <div class="col-md-4 col-sm-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" datepicker-popup="{{dateformat}}" ng-model="searchform.obsdate" is-open="opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" />
+                        <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" ng-click="dateopen($event)">
+                                    <i class="fa fa-fw fa-calendar"></i></button>
+                            </span>
+                    </div>
+                </div>
+            </div>
 
-            <!--<div class="form-group">-->
-                <!--<label class="col-md-4 control-label">Search Header Value</label>-->
-                <!--<div class="col-md-4">-->
-                    <!--<div class="input-group">-->
-                        <!--<input type="text" class="form-control" ng-model="headerval" placeholder=""/>-->
-                    <!--</div>-->
-                <!--</div>-->
-            <!--</div>-->
 
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-10">
@@ -68,9 +64,10 @@
         <thead>
         <th><input type="checkbox" class="input" ng-model="selectall" ng-click="toggleselectall()"></th>
         <th></th>
-        <th>ID</th>
+        <th>Object</th>
         <th>Exposure Time</th>
-        <th>Timestamp</th>
+        <th>Filter</th>
+        <th>Observation Date</th>
         <th>Filesize</th>
         <th>Metadata</th>
         </thead>
@@ -82,6 +79,7 @@
             </td>
             <td>{{exposure.name}}</td>
             <td>{{exposure.header['EXPTIME']}}</td>
+            <td>{{exposure.filter}}</td>
             <td>{{exposure.header['DATE-OBS']}}</td>
             <td>{{exposure.size | bytes}}</td>
             <td><i class="fa fa-fw fa-file text-info" ng-click="infodump($index); $event.stopPropagation();"></i></td>

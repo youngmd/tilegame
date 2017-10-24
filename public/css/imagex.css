@@ -104,7 +104,7 @@ html, body, .container-fluid, .row {
     background-color: #CCCCCC;
 }
 
-@media (min-width: 992px) {
+@media (min-width: 600px) {
     .sidebar {
         position: fixed;
         top: 45px;

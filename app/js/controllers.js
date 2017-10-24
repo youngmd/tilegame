@@ -13,13 +13,15 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
     $scope.searchop;
 
     $scope.searchform = {
-        filename: '',
+        object: '',
         minDate: '',
         maxDate: '',
         ra: '',
         dec: '',
         radius: 1.0,
-        radscale: 'degree'
+        radscale: 'degree',
+        filter: '',
+        obsdate: '',
     };
 
     $scope.getexposures = function() {
@@ -27,28 +29,18 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
         $scope.exposures = [];
 
 
-
-        // if(typeof $scope.formData.obsdate == 'undefined') {
-        //     toaster.pop('error', 'Bad Date', "Enter a valid date to search");
-        //     return;
-        // }
-        //
-        // var obsdate = $filter('date')($scope.formData.obsdate, "yyyyMMdd_");
-        // var expsearch = "filter[where][exp_id][like]=" + obsdate;
-
-        // $scope.headerstr = "header."+$scope.headerkey;
-        // //$http.get(appconf.api_url+"/exposures/?"+expsearch).
-        // var searchObj = {"where":{}};
-        // searchObj.where[$scope.headerstr] = {};
-        // searchObj.where[$scope.headerstr][$scope.searchop] = parseFloat($scope.headerval);
-        // console.log(searchObj);
-        // console.log(JSON.stringify(searchObj));
-        // searchObj = encodeURIComponent(JSON.stringify(searchObj));
-        // console.log(searchObj);
-
         var searchStr = "/exposures?";
-        if($scope.searchform.filename !== ''){
-            searchStr = searchStr + "filter[where][name][like]="+$scope.searchform.filename+"*";
+        if($scope.searchform.object !== ''){
+            searchStr = searchStr + "filter[where][name][like]="+$scope.searchform.object+"*&";
+        }
+        if($scope.searchform.filter !== ''){
+            searchStr = searchStr + "filter[where][filter][regexp]=/"+encodeURIComponent($scope.searchform.filter)+"/i&";
+        }
+        if($scope.searchform.obsdate !== ''){
+            var obsdate = $filter('date')($scope.searchform.obsdate, "yyyy-MM-dd");
+            var dateLow = obsdate + 'T00:00:00Z';
+            var dateHigh = obsdate + 'T23:59:59Z';
+            searchStr = searchStr + "filter[where][header.DATE-OBS][between][0]="+dateLow+"&filter[where][header.DATE-OBS][between][1]="+dateHigh;
         }
         var url = appconf.api_url+searchStr;
         console.log(url);
@@ -61,6 +53,18 @@ myapp.controller('SearchController', function ($scope, $http, $filter, $modal, a
         });
     };
 
+    $scope.today = function() {
+        return new Date();
+    };
+    $scope.maxdate = $scope.today();
+    $scope.format = 'yyyy-MM-dd';
+
+    $scope.dateopen = function($event) {
+        $event.preventDefault();
+        $event.stopPropagation();
+
+        $scope.opened = true;
+    };
 
     $scope.selectall = false;
 
@@ -730,6 +734,7 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
             ixids: ['59ed00f4327cd50010741ef4','59ed01cb327cd50010741ef6','59ed02c8327cd50010741ef8'],
             img: 'public/images/demo/3color.png',
             arrangement: 'grid',
+            desc: 'Three images of the M1 Crab Nebula were taken in g`, r`, and H-alpha. They are assigned one of three colors (RGB) and composited using the "light" option.  Click on the WCS view button (globe) to align the images. ',
             onload: function(){
                return {
                    '59ed00f4327cd50010741ef4': {cmap:'green_cm'},
@@ -743,6 +748,7 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
             ixids: [],
             arrangment: 'wcs',
             img: 'public/images/demo/grid.png',
+            desc: 'A DECam exposure of the central bulge consisting of 60 extension images are rendered individually and placed into their correct spatial positions based on the header WCS. ',
             onload: function(){
                 return {}
             }
@@ -751,7 +757,8 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
             title: "Rotation and Position",
             ixids: [],
             arrangment: 'wcs',
-            img: 'public/images/demo/telescope.png',
+            img: 'public/images/demo/rotate.png',
+            desc: 'Manipulating the position and rotation angle of multiple images simultaneously is easily done in ImageX.',
             onload: function(){
                 return {
                     all : {
@@ -767,6 +774,7 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
             ixids: ['59ed00f4327cd50010741ef4','59ed01cb327cd50010741ef6','59ed02c8327cd50010741ef8'],
             img: 'public/images/demo/blink.png',
             arrangement: 'wcs',
+            desc: 'The opacity of each image can be individually controlled, and a simple $interval function sets ImageX looping through the overlaid images.',
             onload: function(){
                 return {
                     all : {
@@ -798,10 +806,12 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
 
     $scope.populate();
 
+    $scope.activedemo = false;
     $scope.onload = undefined;
     $scope.launchDemo = function(demoId){
         angular.element($("#demoTarget")).empty();
         var demo = $scope.demos[demoId];
+        $scope.activedemo = demo;
         $scope.ixids = demo.ixids;
         $scope.ixid = demoId;
         $scope.onload = demo.onload;

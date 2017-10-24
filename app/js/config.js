@@ -11,8 +11,8 @@ angular.module('app.config', [])
 
     jwt_id: 'jwt',
 
-    default_redirect_url: '/#!/signin',  //don't start with #
-    auth_redirect_url: '/#!/demo', //for signed-in users
+    default_redirect_url: '/signin',  //don't start with #
+    auth_redirect_url: '/demo', //for signed-in users
     auth_token: 'auth_token',
     user: 'ix_user',
 
