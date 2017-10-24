@@ -415,6 +415,36 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, $interva
         });
     };
 
+    $scope.rainbow = function(imageid){
+        console.log(imageid);
+        var image = $scope.associations[imageid];
+        var placement = $scope.scaleImg(imageid);
+        var source = image.source.queryParams.input;
+        angular.forEach($scope.colormaps, function(cmap, cm){
+            var newimageid = imageid + '_' + cm;
+            $scope.viewer.addTiledImage({
+                tileSource: source,
+                x: placement.x,
+                y: placement.y,
+                width: placement.width,
+                degrees: 0,
+                success: function (event) {
+                    console.log(event.item);
+                    $scope.associations[newimageid] = event.item;
+                    $scope.associations[newimageid].selected = false;
+                    $scope.associations[newimageid].degrees = 0;
+                    $scope.associations[newimageid]['x'] = placement.x;
+                    $scope.associations[newimageid]['y'] = placement.y;
+                    $scope.colorize(cm, $scope.associations[newimageid]);
+                    $scope.viewer.viewport.goHome();
+                }
+            });
+        });
+
+        $scope.model.multi = true;
+        $scope.gridView();
+    };
+
     $scope.blink = function(delay){
         var imglist = [];
         angular.forEach($scope.associations, function(image, imageid) {
@@ -456,6 +486,7 @@ myapp.controller('ImagexController', function ($scope, $http, $timeout, $interva
                 if(postops === undefined) return;
                 if(postops.all !== undefined) {
                     if(postops.all.deal !== undefined) $scope.deal();
+                    if(postops.all.rainbow !== undefined) $timeout($scope.rainbow(JSON.parse($scope.imageids)[0]), 3000);
                     if(postops.all.blink !== undefined) $scope.blink(postops.all.blink);
                     if(postops.all.cmap !== undefined) $scope.colorize(postops.all.cmap, null);
                 }
@@ -729,22 +760,31 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
 
 
     $scope.demos = {
+        // 'colormap' : {
+        //     title: 'Color Mapping',
+        //     ixids: [],
+        //     img: 'public/images/demo/rainbow.png',
+        //     arrangement: 'grid',
+        //     desc: 'A single image of M81, displayed in all the available colormap formats',
+        //     onload: function(){
+        //         return {
+        //             all : {
+        //                 rainbow: null
+        //             }
+        //         }
+        //     }
+        // },
         '3color' : {
-            title: 'True Color Image',
-            ixids: ['59ed00f4327cd50010741ef4','59ed01cb327cd50010741ef6','59ed02c8327cd50010741ef8'],
+            title: 'RGB Colorization',
+            //ixids: ['59ed00f4327cd50010741ef4','59ed01cb327cd50010741ef6','59ed02c8327cd50010741ef8'],
+            ixids : [],
             img: 'public/images/demo/3color.png',
             arrangement: 'grid',
             desc: 'Three images of the M1 Crab Nebula were taken in g`, r`, and H-alpha. They are assigned one of three colors (RGB) and composited using the "light" option.  Click on the WCS view button (globe) to align the images. ',
-            onload: function(){
-               return {
-                   '59ed00f4327cd50010741ef4': {cmap:'green_cm'},
-                   '59ed01cb327cd50010741ef6': {cmap:'red_cm'},
-                   '59ed02c8327cd50010741ef8': {cmap:'blue_cm'}
-               }
-            }
+            onload: function(){return {}}
         },
         'night' : {
-            title: "Multi-extension",
+            title: "WCS Positioning",
             ixids: [],
             arrangment: 'wcs',
             img: 'public/images/demo/grid.png',
@@ -771,7 +811,7 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
         },
         'blink' : {
             title: 'Blink',
-            ixids: ['59ed00f4327cd50010741ef4','59ed01cb327cd50010741ef6','59ed02c8327cd50010741ef8'],
+            ixids: [],
             img: 'public/images/demo/blink.png',
             arrangement: 'wcs',
             desc: 'The opacity of each image can be individually controlled, and a simple $interval function sets ImageX looping through the overlaid images.',
@@ -784,6 +824,44 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
                 }
             }
         },
+    };
+
+    $scope.populateM1 = function(){
+        var found_filters = [];
+        $http({
+            url : appconf.api_url+encodeURI('/exposures?filter[where][name][like]=M1*'),
+            method : 'GET'
+        }).then(
+            function(res){
+                var onload = {}
+                angular.forEach(res.data, function(value, key){
+
+                    if(value.filter == 'CTIO_Ha' && (found_filters.indexOf(value.filter) == -1)){
+                        found_filters.push('CTIO_Ha');
+                        $scope.demos['3color'].ixids.push(value.id);
+                        onload[value.id] = {cmap: 'red_cm'};
+                    }
+
+                    if(value.filter == 'odi_r' && (found_filters.indexOf(value.filter) == -1)){
+                        found_filters.push('odi_r');
+                        $scope.demos['3color'].ixids.push(value.id);
+                        onload[value.id] = {cmap: 'green_cm'};
+                    }
+
+                    if(value.filter == 'odi_g' && (found_filters.indexOf(value.filter) == -1)){
+                        found_filters.push('odi_g');
+                        $scope.demos['3color'].ixids.push(value.id);
+                        onload[value.id] = {cmap: 'blue_cm'};
+                    }
+                });
+
+                $scope.demos['3color'].onload = function(){return onload};
+                $scope.demos['blink'].ixids = $scope.demos['3color'].ixids;
+
+            },
+            function(err){
+                console.dir(err);
+            });
     };
 
     $scope.populate = function(){
@@ -805,6 +883,7 @@ myapp.controller('DemoController', function($scope, $http, $compile, appconf, to
     };
 
     $scope.populate();
+    $scope.populateM1();
 
     $scope.activedemo = false;
     $scope.onload = undefined;

@@ -124,47 +124,6 @@ myapp.filter('limitObjectTo', function() {
     };
 });
 
-// myapp.directive('imagexviewer', function() {
-//    return {
-//        restrict: "E",
-//        replace: true,
-//        transclude: true,
-//        scope: {
-//            ixid: '@',
-//            pixelscale: '@'
-//        },
-//        template: "<div id=\"{{ixid}}\" class=\"openseadragon\" style=\"height: 400px;\"></div>",
-//        controller: ['$scope', '$timeout', 'appconf', 'TokenService', function ($scope, $timeout, appconf, TokenService) {
-//
-//            $timeout(function(){
-//                TokenService.get($scope.ixid, function(at){
-//                    console.log($scope.ixid);
-//                    $scope.viewer = OpenSeadragon({
-//                        id: $scope.ixid,
-//                        prefixUrl: "/public/images/osd_buttons/",
-//                        tileSources: "/imagexdata/imagex/"+$scope.ixid+"/image.dzi?at="+at
-//                    });
-//
-//                    $scope.viewer.scalebar({
-//                        type: OpenSeadragon.ScalebarType.MAP,
-//                        sizeAndTextRenderer: OpenSeadragon.ScalebarSizeAndTextRenderer.ASTRONOMY,
-//                        pixelsPerMeter: (1 / parseFloat($scope.pixelscale)),
-//                        location: OpenSeadragon.ScalebarLocation.BOTTOM_LEFT,
-//                        xOffset: 5,
-//                        yOffset: 10,
-//                        minWidth: "75px",
-//                        stayInsideImage: false,
-//                        color: "rgb(100, 100, 100)",
-//                        fontColor: "rgb(100, 100, 100)",
-//                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-//                        fontSize: "small",
-//                        barThickness: 2
-//                    });
-//                });
-//            });
-//        }]
-//     };
-//});
 
 myapp.directive('imagexviewer', function() {
     return {
@@ -295,15 +254,11 @@ myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
             controller: 'SearchController',
             requiresLogin: true
         })
-        .when('/download', {
-            templateUrl: 't/download.html',
-            controller: 'DownloadController',
-            requiresLogin: true
-        })
         .when('/activity', {
             templateUrl: 't/activity.html',
             controller: 'ActivityController',
-            requiresLogin: true
+            requiresLogin: true,
+            requiresAdmin: true
         })
         .when('/signin', {
             templateUrl: 't/signin.html',
@@ -312,7 +267,8 @@ myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
         .when('/upload', {
             templateUrl: 't/upload.html',
             controller: 'UploadController',
-            requiresLogin: true
+            requiresLogin: true,
+            requiresAdmin: true
         })
         .when('/users', {
             templateUrl: 't/users.html',

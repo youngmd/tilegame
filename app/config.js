@@ -10,11 +10,7 @@ exports.auth = {
     default: {
         //scopes can be empty.. but don't remove it! (a lot of app expects scopes object to exist)
         scopes: {
-            sca: ["user"],
-            mca: ["user"], //needed by mca
-            dicom: ["user"], //needed by dicom
         },
-        gids: [ 1 ],
     },
 
     //isser to use for generated jwt token

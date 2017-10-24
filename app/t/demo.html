@@ -4,9 +4,10 @@
     <div class="row">
         <div class="col-md-3 col-sm-4 sidebar">
             <br>
+            <h4>ImageX Demos</h4>
             <div class="list-group">
                 <a class="list-group-item" ng-repeat="(id, d) in demos" ng-click="launchDemo(id)">
-                    <img class="smallbtnicon" src="{{d.img}}"> {{d.title}}
+                    <img class="smallbtnicon" src="{{d.img}}"> | {{d.title}}
                 </a>
             </div>
             <div class="panel panel-info" ng-show="activedemo">
