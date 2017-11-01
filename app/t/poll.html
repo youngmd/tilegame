@@ -1,0 +1,20 @@
+
+<div class="container">
+    <div class="page-header">
+        <h1>{{title}} <small ng-if="showCounter">{{selectedCount}} chosen</small></h1>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-6 col-sm-4 col-md-3 tnail" ng-repeat="img in images" ng-if="img.showme && !visited">
+            <div class="wrapper">
+                <a href="" class="thumbnail" ng-click="updateSelected(img);">
+                    <img src="{{img.thumb}}" alt="{{img.title}}">
+                </a>
+                <button class="btn btn-info inspect" ng-click="modalview(img.url); event.preventDefault();"><i class="fa fa-search-plus"></i></button>
+                <button class="btn btn-success selected" ng-show="img.selected"><i class="fa fa-check"></i></button>
+            </div>
+        </div>
+        <div class="jumbotron" ng-if="visited">Thank you for completing the poll.</div>
+    </div>
+
+</div>

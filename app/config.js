@@ -3,24 +3,12 @@
  */
 var winston = require('winston');
 var fs = require('fs');
-var imagex = fs.readFileSync(__dirname + '/imagex.key')
 
 exports.auth = {
     //default user object when registered
-    default: {
-        //scopes can be empty.. but don't remove it! (a lot of app expects scopes object to exist)
-        scopes: {
-        },
-    },
+    admin_user: 'cyoung',
+    admin_pass: 'cc03e747a6afbbcbf8be7668acfebee5',
 
-    //isser to use for generated jwt token
-    iss: "https://imagex.sca.iu.edu/",
-    //ttl for jwt
-    ttl: 24*3600*1000, //1 day
-
-    //TODO - fix this
-    secret: 'shhhhhhared-secret',
-    imagex_secret : imagex
 
     //allow_signup: false, //prevent user from signing in (set false if not using local auth)
 };

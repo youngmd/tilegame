@@ -12,8 +12,7 @@ var myapp = angular.module('myapp', [
     'angular-jwt',
     'ui.bootstrap',
     'ui.gravatar',
-    'ui.select',
-    'rzModule'
+    'ui.select'
 ]);
 
 myapp.factory('AuthService', function(appconf, $http) {
@@ -87,22 +86,6 @@ myapp.factory('AuthService', function(appconf, $http) {
     };
 });
 
-myapp.factory('TokenService', function($http){
-    return {
-        get: function(eid, cb) {
-            $http({
-                url: '/tokennew/'+eid
-            }).then(function(res){
-                cb(res.data);
-            },
-            function(err){
-                console.dir(err);
-                cb(null);
-            })
-        }
-    }
-});
-
 myapp.filter('bytes', function() {
     return function(bytes, precision) {
         if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-';
@@ -124,113 +107,13 @@ myapp.filter('limitObjectTo', function() {
     };
 });
 
-
-myapp.directive('imagexviewer', function() {
-    return {
-        restrict: "E",
-        replace: true,
-        transclude: true,
-        scope: {
-            ixid: '@',
-            imageids: '@',
-            ixheight: '@',
-            arrangement: '@',
-            onload: '&onload'
-        },
-        templateUrl: "t/imagex.html",
-        controller: 'ImagexController'
-    };
-});
-
-myapp.directive('navbar', function() {
-    return {
-        restrict: "E",
-        replace: true,
-        scope: {
-            active: '@'
-        },
-        templateUrl: 't/navbar.html',
-        controller: ['$scope', '$location','appconf', 'AuthService', 'toaster', function ($scope, $location, appconf, AuthService, toaster) {
-            $scope.user = AuthService.user();
-            $scope.title = appconf.title;
-            $scope.logout = function() {
-                AuthService.logout(function(res){
-                    console.dir(res);
-                    if(res){
-                        $location.path("/signin");
-                        toaster.pop('success', 'Logged Out', "Successfully logged out");
-                    }
-                });
-            }
-        }]
-    };
-});
-
-myapp.directive("colormap", function() {
-    return {
-        restrict: "A",
-        scope: {
-            cmap: '=cmap',
-            width: '@',
-            height: '@',
-            label: '@'
-        },
-        link: function (scope, element, attrs) {
-
-            var tmp_cmap = scope.cmap.slice(0);
-            var center = 128;
-            var diff = 255 - center;
-            for(i = 0; i < 256; i++) {
-                if(i > center){
-                    var offset = i - center;
-                    var ratio = offset / diff;
-                    var position = Math.min(ratio * 128 + 128,255)|0;
-                }else{
-                    var ratio = center / 128;
-                    var position = Math.max(0,i/ratio,0)|0;
-                }
-                tmp_cmap[i] = scope.cmap[position];
-            }
-
-            var width = scope.width;
-            var height = scope.height;
-            var canvas = document.createElement('canvas');
-            var label = document.createTextNode(scope.label);
-
-            var ctx = canvas.getContext('2d');
-            canvas.id = 'canvas';
-            canvas.width = width;
-            canvas.height = height;
-
-            element[0].appendChild(canvas);
-            element[0].appendChild(label);
-
-            var step = canvas.width / 256;
-            var distance = 0;
-
-
-            for(var i = 0; i < 256; i++){
-                var value = tmp_cmap[i];
-                ctx.strokeStyle = "rgb("+value[0]+","+value[1]+","+value[2]+")";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(distance,0);
-                ctx.lineTo(distance,canvas.height);
-                ctx.stroke();
-                distance = distance + step;
-            }
-
-        }
-    };
-});
-
 myapp.directive('modalDialog', function() {
     return {
         restrict: 'E',
         replace: true,
         transclude: true,
         link: function(scope) {
-            scope.cancel = function() {
+                scope.cancel = function() {
                 scope.$dismiss('cancel');
             };
         },
@@ -249,16 +132,9 @@ myapp.directive('modalDialog', function() {
 //configure route
 myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
     $routeProvider.
-    when('/search', {
-            templateUrl: 't/search.html',
-            controller: 'SearchController',
-            requiresLogin: true
-        })
-        .when('/activity', {
-            templateUrl: 't/activity.html',
-            controller: 'ActivityController',
-            requiresLogin: true,
-            requiresAdmin: true
+    when('/poll', {
+            templateUrl: 't/poll.html',
+            controller: 'PollController'
         })
         .when('/signin', {
             templateUrl: 't/signin.html',
@@ -270,19 +146,12 @@ myapp.config(['$routeProvider', 'appconf', function($routeProvider, appconf) {
             requiresLogin: true,
             requiresAdmin: true
         })
-        .when('/users', {
-            templateUrl: 't/users.html',
-            controller: 'UserController',
-            requiresLogin: true,
-            requiresAdmin: true
-        })
-        .when('/demo', {
-            templateUrl: 't/demo.html',
-            controller: 'DemoController',
-            requiresLogin: true
+        .when('/admin', {
+            templateUrl: 't/admin.html',
+            controller: 'AdminController'
         })
         .otherwise({
-            redirectTo: '/signin'
+            redirectTo: '/poll'
         });
 }]).run(['$rootScope', '$location', 'toaster', 'jwtHelper', 'appconf', 'AuthService', function($rootScope, $location, toaster, jwtHelper, appconf, AuthService) {
     $rootScope.$on("$routeChangeStart", function(event, next, current) {

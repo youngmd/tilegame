@@ -1,0 +1,90 @@
+
+<div class="container">
+    <div class="page-header">
+        <h1>Admin</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 col-offset-1">
+            <div class="btn-group btn-group-justified">
+                <a class="btn btn-info" ng-show="details" ng-click="details = false">Show Results</a>
+                <a class="btn btn-info" ng-hide="details" ng-click="details = true">Edit Details</a>
+                <a class="btn btn-danger" ng-click="resetPoll()">Reset Poll</a>
+            </div>
+        </div>
+    </div>
+
+    <br>
+
+    <div class="row" ng-if="!details">
+
+        <div class="col-md-12">
+            <div class="panel">
+                <div class="panel-heading">
+                    <h4>Cover Winner</h4>
+                </div>
+                <div class="panel-body">
+                    <div ng-show="coverTie">There is a tie!</div>
+                    <div ng-hide="coverTie">
+                        <img src="{{'/public/images/poll/' + coverWinner.filename + '?dim=128x128';}}" alt="{{coverWinner.filename}}">
+                        <h5>{{coverWinner.filename}}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <h4>Include Votes</h4>
+            <table class="table table-responsive">
+                <tr ng-repeat="img in images | orderBy:'-include_votes'">
+                    <td>
+                        <h4>{{$index + 1}}</h4>
+                    </td>
+                    <td>
+                        <img src="{{'/public/images/poll/' + img.filename + '?dim=64x64';}}" alt="{{img.filename}}">
+                    </td>
+                    <td>
+                        <h4>{{img.filename}} - {{img.include_votes}}</h4>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="row" ng-repeat="img in images" ng-if="details">
+        <div class="col-md-3">
+            <a href="" class="thumbnail">
+                <img src="{{'/public/images/poll/' + img.filename + '?dim=256x256';}}" alt="{{img.filename}}">
+            </a>
+        </div>
+
+        <div class="col-md-9">
+            <table class="table table-responsive">
+                <tr>
+                    <th>Filename</th>
+                    <td>{{img.filename}}</td>
+                </tr>
+                <tr>
+                    <th>Author</th>
+                    <td><input type="text" ng-model="img.author" ng-change="updateImages()" ng-model-options="{debounce:1000}"></td>
+                </tr>
+                <tr>
+                    <th>Student Made</th>
+                    <td><select ng-model="img.student" ng-change="updateImages();">
+                        <option ng-value="true">True</option>
+                        <option ng-value="false">False</option>
+                    </select></td>
+                </tr>
+                <tr>
+                    <th>Include Votes</th>
+                    <td>{{img.include_votes}}</td>
+                </tr>
+                <tr>
+                    <th>Cover Votes</th>
+                    <td>{{img.cover_votes}}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+</div>
