@@ -1,381 +1,273 @@
 'use strict';
 
-myapp.controller('PollController', function ($scope, $http, $filter, $modal, $timeout, $location, $cookies, appconf, toaster) {
-    $scope.images = [];
-    $scope.selectedCount = 0;
-    $scope.limit = appconf.voteFor;
-    $scope.showme = true;
-    $scope.covervote = false;
-    $scope.showCounter = false;
 
-    $scope.visited = $cookies.get('visited');
+myapp.controller('GameController', function($scope, $timeout, $window, $routeParams) {
 
+    $scope.tokens = $routeParams.tokens !== undefined ? $routeParams.tokens : 5;
+    $scope.starting_tokens = $routeParams.tokens !== undefined ? $routeParams.tokens : 5;
 
-    $scope.updateSelected = function(img) {
-        $scope.selected = [];
-        img.selected = !img.selected;
-        var count = 0;
-        angular.forEach($scope.images, function(img){
-           if(img.selected) {
-               count++;
-               $scope.selected.push(img.filename);
-           }
-        });
-        $scope.selectedCount = count;
+    $scope.delay = $routeParams.delay !== undefined ? parseInt($routeParams.delay) * 1000 : 3000;
+    $scope.delay += 3000;
+    $scope.round = 1;
+    $scope.max_rounds = 5;
+    $scope.free_corrector = true;
+    $scope.selection = false;
 
-        if($scope.covervote) {
-            $http({
-                method: "POST",
-                url: '/cover',
-                data: $scope.selected
-            }).then(function(res) {
-                $scope.visited = true;
-                $cookies.put('visited', $scope.visited);
-                $scope.modalDone();
-            }, function(err) {
-                console.dir(err);
-            });
-        };
+    $scope.status = 'tiles';
+    $scope.chosen_tile = false;
 
-        if($scope.selectedCount >= $scope.limit){
-            var counter = 1;
+    $scope.selected = '';
 
-            $scope.images.sort(function (a, b) {
-                return Math.random() - 0.5;
-            });
+    $scope.passcode = '';
 
-            angular.forEach($scope.images, function(img){
-                if (img.selected && img.student) {
-                    counter++;
-                    img.selected = false;
-                    img.showme = false;
-                    $timeout(function () {
-                        img.showme = true;
-                    }, counter * 300);
-                } else {
-                    img.showme = false;
-                }
-            });
+    $scope.purchased = [];
 
-            console.log($scope.selected);
-            $http({
-                    method: "POST",
-                    url: '/include',
-                    data: $scope.selected
-                }).then(function(res) {
+    $scope.source;
 
-                    $scope.title = "Which of your favorites would make the best cover?";
-                    $scope.showCounter = false;
-                    $scope.covervote = true;
+    $scope.codes = [
+        '',
+        'zvhan9yafajhahajhck5',
+        'kgkcgkgkckcg8b57bn4c',
+        'txsrs3x1x9pop9pxao9p',
+        'lyiolioy91qmp9ylm9ok',
+        'b7mwb7mbw7wm907x2nm2m'
+    ];
 
-                }, function(err) {
-                    console.dir(err);
-                });
-        };
+    $scope.tiletypes = [
+        {'type' : 1, cost: 3, label: '$$$$', desc: 'Tiles marked with “$$$$” will give you a very high number of points. They cost 3 tokens.'},
+        {label: '$$$', type: 2, cost: 2, desc: 'Tiles marked with “$$$” will give you a high number of points.They cost 2 tokens.'},
+        {label: '$', type: 3, cost: 1, desc: 'Tiles marked with “$” will give you a low number of points.They cost 1 token.'},
+        {label: '$$$$', label2: 'or NOTHING', type: 4, cost: 2, desc: 'Tiles marked with “$$$$ or NOTHING” will give you a very high number of points OR no points at all.They cost 2 tokens.'},
+        {label: '?', type: 5, cost: 2, desc: 'This is a mystery tile. You do not know how many points a mystery tile will give you. Note: some mystery tiles cost 1 token and some cost 2 tokens. See each tile for the price.'}
+    ];
 
-    };
+    $scope.show_tiletypes = function() {
+        $scope.status = 'tiletypes';
+    }
 
-    $scope.getImages = function() {
-        $http({
-            method: "GET",
-            url: "/pollImages"
-        }).then(function (res) {
-            $scope.images = res.data;
-            $scope.images.sort(function (a, b) {
-                return Math.random() - 0.5;
-            });
-            var counter = 1;
-            angular.forEach($scope.images, function (img) {
-                counter++;
-                img['url'] = "/public/images/poll/" + img.filename + "?dim=1024x1024";
-                img['thumb'] = "/public/images/poll/" + img.filename + "?dim=256x256";
-                img['tile'] = "/public/images/poll/" + img.filename + "?dim=128x128";
-                img['title'] = img.filename;
-                img['selected'] = false;
-                img['showme'] = false;
-                $timeout(function () {
-                    img.showme = true;
-                }, counter * 100);
-            });
-        }, function (err) {
-            console.dir(err);
-        });
-    };
+    $scope.return_to_game = function() {
+        $scope.status = 'tiles';
+    }
 
-    $scope.modalview = function (imgurl) {
+    $scope.tiles = [
+        [
+            {id: 1, label: '$$$', bought: false, type: 2, cost: 2},
+            {id: 2, label: '?', bought: false, type: 5, cost: 2},
+            {id: 3, label: '$', bought: false, type: 3, cost: 1},
+            {id: 4, label: '', bought: false, type: 6, cost: 0}
+        ],
+        [
+            {id: 5, label: '$', bought: false, type: 3, cost: 1},
+            {id: 6, label: '?', bought: false, type: 5, cost: 1},
+            {id: 7, label: '$', bought: false, type: 3, cost: 1},
+            {id: 8, label: '$', bought: false, type: 3, cost: 1}
+        ],
+        [
+            {id: 9, label: '', bought: false, type: 6, cost: 0},
+            {id: 10, label: '$$$', bought: false, type: 2, cost: 2},
+            {id: 11, label: '$$$$', label2: 'or NOTHING', bought: false, type: 4, cost: 2},
+            {id: 12, label: '', bought: false, type: 6, cost: 0}
+        ],
+        [
+            {id: 13, label: '?', bought: false, type: 5, cost: 2},
+            {id: 14, label: '$$$$', bought: false, type: 1, cost: 3},
+            {id: 15, label: '$', bought: false, type: 3, cost: 1},
+            {id: 16, label: '$$$$', label2: 'or NOTHING', bought: false, type: 4, cost: 2}
+        ]
+    ];
 
-        console.log(imgurl);
-        $modal.open({
-            template: '<modal-dialog><img class="img-responsive" src="{{url}}"></modal-dialog>', // loads the template
-            backdrop: true, // setting backdrop allows us to close the modal window on clicking outside the modal window
-            windowClass: 'modal', // windowClass - additional CSS class(es) to be added to a modal window template
-            controller: function ($scope, $modalInstance) {
-                $scope.url = imgurl;
-                $scope.size = 'lg';
-                $scope.cancel = function () {
-                    $modalInstance.dismiss('cancel');
-                };
-            },
-            resolve: {}
-        });//end of modal.open
-    }; // end of scope.open functionnd of scope.open function
+    $scope.clear_tiles = function() {
+        if($scope.round == 3){
+            if($scope.tiles[0][0].bought == false){
+                $scope.tiles[0][0].type = 6;
+            } else {
+                $scope.tiles[2][1].type = 6;
+            }
+        }
 
-    $scope.modalDone = function() {
-        var images = $scope.images;
-        $scope.visited = true;
-        $modal.open({
-            template: '<modal-dialog>' +
-            '<h3 class="text-warning">Look for the final coloring book in the ASE Store in December.</h3><br>' +
-            '<h4 ng-if="!download">Select one of your favorites to download a full-resolution version.</h4>' +
-            '<div class="row">' +
-            '<div class="col-xs-3" ng-repeat="img in images" ng-if="img.showme"><a class="thumbnail" ng-click="downloadfull(img);"> ' +
-            '<img src="{{img.tile}}" alt="{{img.title}}"> ' +
-            '</a></div>' +
-            '<h4 ng-if="download">Your image is downloading...</h4></div>' +
-            '</modal-dialog>', // loads the template
-            windowClass: 'modal', // windowClass - additional CSS class(es) to be added to a modal window template
-            backdrop: false,
-            controller: function ($scope, $modalInstance, $window) {
-                $scope.size = 'lrg';
-                $scope.images = images;
-                $scope.download = false;
-                $scope.dialogTitle = 'Thank you for voting!';
-                $scope.cancel = function () {
-                    $modalInstance.dismiss('cancel');
-                };
-                $scope.downloadfull = function(img){
-
-                    $scope.download = true;
-                    angular.forEach($scope.images, function(img){
-                        img.showme = false;
-                    });
-
-                    var url = '/download/'+img.filename;
-
-                    $window.location.assign(url);
-                };
-            },
-            resolve: {}
-        });//end of modal.open
-    }; // end of scope.open functionnd of scope.open function
-
-    if($scope.visited !== undefined && $scope.visited){
-        $scope.title = "Poll Completed";
-    } else {
-        $scope.title = "Select your "+$scope.limit+" favorite images";
-        $scope.showCounter = true;
-        $scope.getImages();
-    };
-
-});
-
-myapp.controller('SigninController', function ($scope, $http, $location, toaster, appconf, AuthService) {
-
-    $scope.login = function() {
-        if ($scope.username == "") {
-            toaster.pop('error', 'Invalid or empty username', "Please enter a valid email");
-        } else {
-            AuthService.login($scope.username, $scope.password, function (res) {
-                if (res) {
-                    var redirect = sessionStorage.getItem('auth_redirect');
-                    if (redirect == "" || redirect == undefined) redirect = appconf.auth_redirect_url;
-                    // toaster.pop('success', 'Redirect', "Redirecting to " + redirect);
-                    AuthService.getRoles(function(res) {
-                        // toaster.pop('success', 'Roles', res);
-                        $location.path(redirect);
-                    });
-                } else {
-                    toaster.pop('error', 'Login Failed', "Check username/password");
-                }
-            });
+        if($scope.round == 5){
+            if($scope.tiles[0][2].bought == false){
+                $scope.tiles[0][2].type = 6;
+            } else {
+                $scope.tiles[1][2].type = 6;
+            }
         }
     };
-});
 
-myapp.controller('AdminController', function ($scope, $http, $location, $modal, toaster, appconf, AuthService) {
 
-    $scope.images = [];
-    $scope.details = true;
-    $scope.includeCount = appconf.includeCount;
-
-    $scope.coverTie = false;
-    $scope.coverWinner = {
-        cover_votes: 0
+    $scope.buyme = function(tile) {
+        if(tile.type == 6 || tile.bought){
+            return;
+        }
+        if(tile.cost > $scope.tokens){
+            $scope.message = 'Insufficient funds!';
+            return;
+        } else {
+            if($scope.selected !== '') $scope.selected.selected = '';
+            $scope.selectmessage = 'You have selected tile '+tile.id;
+            $scope.message = '';
+            $scope.chosen_tile = tile;
+            tile.selected = 'selected';
+            $scope.selected = tile;
+        }
     };
 
-    $scope.getImages = function() {
-        $http({
-            method: "GET",
-            url: "/pollImages",
-            params: { 'foobar': new Date().getTime() }
-        }).then(function (res) {
-            $scope.images = res.data;
-            angular.forEach($scope.images, function(img){
-                if(img.cover_votes > $scope.coverWinner.cover_votes){
-                    $scope.coverTie = false;
-                    $scope.coverWinner = img;
-                }
-                if(img.cover_votes == $scope.coverVotes){
-                    $scope.coverTie = true;
-                }
-            });
-        }, function (err) {
-            console.dir(err);
-        });
+    $scope.confirm = function(tile) {
+
+        console.log(tile);
+        if(tile !== null && tile != false){
+            $scope.tokens -= tile.cost;
+            tile.bought = true;
+            tile.selected = '';
+            tile.type = 6;
+        }
+
+        if(tile == false) {
+            $scope.message = 'Please select a tile.';
+            return;
+        }
+
+        // $scope.source.postMessage( "Tile purchased: " + tile.id, '*');
+
+        var purchased_id = tile !== null ? tile.id : null;
+        $scope.purchased.push(purchased_id);
+        $scope.chosen_tile = false;
+        $scope.status = 'waiting';
+        $timeout(function(){
+            $scope.status = 'passcode2';
+            $scope.message = '';
+            $scope.selectmessage = '';
+        }, Math.floor(Math.random() * $scope.delay));
     };
 
-    $scope.updateImages = function() {
-        $http({
-            method: "POST",
-            url: "/pollUpdate",
-            data: $scope.images
-        }).then(function (res) {
-            toaster.pop('info','Updated', 'Image array updated successfully');
-            $scope.images = res.data;
-        }, function (err) {
-            toaster.pop('error','Unknown Error',err);
-        });
+    $scope.next = function() {
+        $scope.status = 'passcode2';
+        $scope.reset_psub();
     };
 
-    $scope.resetPoll = function() {
-        $modal.open({
-            template: '<modal-dialog><h4>Are you sure?</h4><br><button class="btn btn-danger" ng-click="confirm()">Yes, Reset</button></modal-dialog>', // loads the template
-            windowClass: 'modal', // windowClass - additional CSS class(es) to be added to a modal window template
-            backdrop: false,
-            controller: function ($scope, $modalInstance, toaster) {
-                $scope.size = 'sm';
-                $scope.cancel = function () {
-                    $modalInstance.dismiss('cancel');
-                };
+    $scope.reset_psub = function() {
+        $scope.pmessage = '';
+        $scope.pready = false;
+        $scope.buycorr = false;
+        $scope.sub_asis = false;
+        $scope.sub_free = false;
+    };
 
-                $scope.confirm = function () {
-                    $http({
-                        method: "GET",
-                        url: "/resetPoll"
-                    }).then(function (res) {
-                        toaster.pop('info','Reset', 'The poll values have been reset');
-                        $modalInstance.close();
-                    }, function (err) {
-                        toaster.pop('error','Unknown Error',err);
-                    });
+    $scope.asis = function(pcode) {
+        $scope.reset_psub();
+        $scope.sub_asis = true;
+        $scope.submit_passcode(pcode);
+        //$scope.pmessage = 'You have selected to submit your code as it is';
+    }
+
+    $scope.usefree = function(pcode) {
+        $scope.reset_psub();
+        $scope.sub_free = true;
+        $scope.submit_passcode(pcode);
+        //$scope.pmessage = 'You have selected to use your one free "corrector".  This can only be used once.';
+    }
+
+    $scope.buy_corrector = function(pcode) {
+        $scope.reset_psub();
+        if($scope.tokens < 1){
+            $scope.pmessage = 'Insufficient funds!';
+        } else {
+            $scope.buycorr = true;
+            $scope.submit_passcode(pcode);
+            //$scope.pmessage = 'You have selected to pay 1 token to fix up to 2 mistakes in your secret code';
+        }
+    }
+
+    $scope.accuracy = {};
+
+    $scope.submit_passcode = function(passcode) {
+        if(passcode == ''){
+            $scope.reset_psub();
+            $scope.pmessage = 'Please type your secret code.';
+            return;
+        }
+        console.log(passcode);
+        if($scope.buycorr){
+            $scope.tokens--;
+        }
+
+        $scope.accuracy['Round '+$scope.round] = $scope.similarity(passcode.split('').reverse().join(''), $scope.codes[$scope.round]);
+
+        console.log($scope.accuracy);
+        $scope.passcode = '';
+        if($scope.sub_free){
+            $scope.free_corrector = false;
+        }
+        $scope.status = 'waiting2';
+        $scope.round++;
+        $scope.clear_tiles();
+        if($scope.round > 5){
+            $scope.status = 'gameover';
+            var results = {
+                tiles_purchased : $scope.purchased,
+                accuracy: $scope.accuracy,
+                starting_tokens : $scope.starting_tokens,
+                ending_tokens : $scope.tokens
+            };
+            $scope.source.postMessage( results, '*');
+
+        } else {
+            $timeout(function(){
+                $scope.status = 'tiles';
+                $scope.message = '';
+            }, Math.floor(Math.random() * $scope.delay));
+        }
+    };
+
+    $scope.similarity = function(s1, s2) {
+        console.log((s1, s2));
+        var longer = s1;
+        var shorter = s2;
+        if (s1.length < s2.length) {
+            longer = s2;
+            shorter = s1;
+        }
+        var longerLength = longer.length;
+        if (longerLength == 0) {
+            return 1.0;
+        }
+        return (longerLength - $scope.editDistance(longer, shorter)) / parseFloat(longerLength);
+    };
+
+    $scope.editDistance = function(s1, s2) {
+        s1 = s1.toLowerCase();
+        s2 = s2.toLowerCase();
+
+        var costs = new Array();
+        for (var i = 0; i <= s1.length; i++) {
+            var lastValue = i;
+            for (var j = 0; j <= s2.length; j++) {
+                if (i == 0)
+                    costs[j] = j;
+                else {
+                    if (j > 0) {
+                        var newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue),
+                                    costs[j]) + 1;
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
                 }
             }
-        }).result.then(function () {
-            console.log("in here");
-            $scope.images = [];
-            $scope.getImages();
-        }, function () {
-            console.log("cancelled");
-        });
-
+            if (i > 0)
+                costs[s2.length] = lastValue;
+        }
+        console.log(costs);
+        return costs[s2.length];
     };
 
-    $scope.getImages();
-});
-
-myapp.controller('ResultsController', function ($scope, $http, $location, toaster, appconf) {
-
-    $scope.users = {};
-    $scope.roles = {};
-
-    var authToken = JSON.parse(localStorage.getItem(appconf.auth_token));
-    $http({
-        method: "GET",
-        url: appconf.api_url+"/users?filter[include]=roles&access_token="+authToken.id
-    }).then(function(res) {
-        $scope.users = res.data;
-        angular.forEach($scope.users, function(user){
-            $http({
-                method: "GET",
-                url: appconf.api_url+"/users/"+user.id+"/getRolesById?&access_token="+authToken.id
-            }).then(function(res) {
-                console.dir(res);
-                user.roles = res.data.payload.roles;
-            }, function(err) {
-                console.dir(err);
-            });
-        })
-    }, function(err) {
-        console.dir(err);
+    $window.addEventListener('message', function(event) {
+        console.dir(event.source);
+        $scope.source = event.source;
+        //console.log('Setting event source to '+event.source);
     });
 
-
-
-
-});
-
-myapp.controller('UploadController', function ($scope, $http, FileUploader, toaster, appconf, AuthService) {
-    $scope.title = "ImageX";
-    $scope.uploader = undefined;
-
-    $scope.renderupload = false;
-    AuthService.getRoles(function(roles){
-        $scope.roles = roles;
-
-
-        var uploader = $scope.uploader = new FileUploader({
-            url: 'upload/'+$scope.roles[0]
-        });
-
-        // FILTERS
-
-        uploader.filters.push({
-            name: 'syncFilter',
-            fn: function(item /*{File|FileLikeObject}*/, options) {
-                console.log('syncFilter');
-                return this.queue.length < 10;
-            }
-        });
-
-        // an async filter
-        uploader.filters.push({
-            name: 'asyncFilter',
-            fn: function(item /*{File|FileLikeObject}*/, options, deferred) {
-                console.log('asyncFilter');
-                setTimeout(deferred.resolve, 1e3);
-            }
-        });
-
-        // CALLBACKS
-
-        uploader.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
-            console.info('onWhenAddingFileFailed', item, filter, options);
-            toaster.pop('error','Invalid Filetype','Please add a valid FITS or .fz compressed file')
-        };
-        uploader.onAfterAddingFile = function(fileItem) {
-            console.info('onAfterAddingFile', fileItem);
-        };
-        uploader.onAfterAddingAll = function(addedFileItems) {
-            console.info('onAfterAddingAll', addedFileItems);
-        };
-        uploader.onBeforeUploadItem = function(item) {
-            console.info('onBeforeUploadItem', item);
-        };
-        uploader.onProgressItem = function(fileItem, progress) {
-            console.info('onProgressItem', fileItem, progress);
-        };
-        uploader.onProgressAll = function(progress) {
-            console.info('onProgressAll', progress);
-        };
-        uploader.onSuccessItem = function(fileItem, response, status, headers) {
-            console.info('onSuccessItem', fileItem, response, status, headers);
-        };
-        uploader.onErrorItem = function(fileItem, response, status, headers) {
-            console.info('onErrorItem', fileItem, response, status, headers);
-        };
-        uploader.onCancelItem = function(fileItem, response, status, headers) {
-            console.info('onCancelItem', fileItem, response, status, headers);
-        };
-        uploader.onCompleteItem = function(fileItem, response, status, headers) {
-            console.info('onCompleteItem', fileItem, response, status, headers);
-            $scope.rows = response.data;
-        };
-        uploader.onCompleteAll = function() {
-            console.info('onCompleteAll');
-        };
-
-        $scope.renderupload = true;
-    });
 
 
 });
