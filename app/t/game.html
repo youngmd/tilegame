@@ -1,0 +1,261 @@
+<style>
+
+    @media (min-width: 768px) {
+        .container{
+            max-width: 900px;
+            min-width: 900px;
+        }
+    }
+
+    *:not(i){
+        font-family: "Helvetica Neue" !important;
+    }
+
+    .gametable {
+        width: 480px !important;
+    }
+
+    .tile {
+        width: 114px !important;
+        height: 114px !important;
+        padding:2px 2px !important;
+        border: rgba(39, 39, 39, 0.61) solid 1px !important;
+        color: #000000;
+        vertical-align: middle !important;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .tile:hover:not(.tile6):not(.tileinfo) {
+        filter: brightness(80%);
+    }
+
+    .tile.selected {
+        border: rgba(39, 90, 39, 0.75) solid 1px;
+        filter: brightness(80%);
+    }
+
+    .tilenumber {
+        position: absolute;
+        top: 1px;
+        left: 3px;
+    }
+
+    .tiletext {
+        text-align: center;
+        vertical-align: middle !important;
+        margin: auto;
+        font-size: 1em;
+        position: relative;
+    }
+
+    .tiletext bigger {
+        font-size: 200%;
+    }
+
+    .biggest {
+        font-size: 250% !important;
+    }
+
+    .tile1 {
+        background-color: coral;
+    }
+
+    .tile2 {
+        background-color: red;
+    }
+
+    .tile3 {
+        background-color: dodgerblue;
+    }
+
+    .tile4 {
+        background-color: olive;
+    }
+
+    .tile5 {
+        background-color: yellow;
+    }
+
+    .tile6 {
+        background-color: grey;
+        cursor: auto;
+    }
+
+    .bought {
+        filter: opacity(50%);
+    }
+
+    .btn {
+        margin-right: 3px;
+    }
+
+    .tileinfo {
+        cursor: default;
+    }
+
+
+    /*input { -webkit-text-security: square; }*/
+
+    .tokenbox {
+        width: 60px;
+        height: 60px;
+        margin: 5px;
+        background-color: #5bc0de;
+        color: white;
+        display:block;
+        text-align: center;
+        vertical-align: middle;
+        line-height: 60px;
+        font-size: xx-large;
+        position: relative;
+        margin-left: 20px;
+    }
+
+    .whitebox {
+        width: 80px;
+        height: 80px;
+        background-color: white;
+        border: rgb(0, 0, 0) solid 1px;
+    }
+
+    .whitebox2 {
+        width: 80px;
+        height: 60px;
+        background-color: white;
+        border: rgb(0, 0, 0) solid 1px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+</style>
+<div class="container tilegame">
+    <br>
+
+    <div class="row" ng-if="status=='tiletypes'">
+        <div>
+            <div class="col-md-10 col-sm-7">
+                <table class="table table-bordered gametable">
+                    <tr ng-repeat="tile in tiletypes">
+                        <td class="tile tileinfo tile{{tile.type}}">
+                            <div class="tiletext" ng-class="{whitebox: tile.type == 5, whitebox2: tile.type == 4}" ng-if="tile.type !== 6">
+                                <b><bigger ng-class="{biggest: tile.type == 5}">{{tile.label}}</bigger> {{tile.label2}}<br><span ng-if="tile.type !== 4">{{tile.cost}} token<span ng-if="tile.cost > 1">s</span></span></b>
+                            </div>
+                            <div style="text-align: center" ng-if="tile.type == 4"><b>{{tile.cost}} tokens</b></div>
+                        </td>
+                        <td>
+                            {{tile.desc}}
+                        </td>
+                    </tr>
+                </table>
+
+                <br>
+                <button class="btn btn-info" ng-click="return_to_game()">Back to Game</button>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row" ng-if="status=='tiles'">
+        <div class="col-md-7 col-sm-7">
+            <table class="table table-bordered gametable">
+                <tr ng-repeat="tilerow in tiles">
+                    <td ng-repeat="tile in tilerow"
+                        ng-click="buyme(tile)"
+                        class="tile tile{{tile.type}} {{tile.selected}}">
+                        <div class="tilenumber"> {{tile.id}}</div>
+                        <div class="tiletext" ng-class="{whitebox: tile.type == 5, whitebox2: tile.type == 4}" ng-if="tile.type !== 6">
+                            <b><bigger ng-class="{biggest: tile.type == 5}">{{tile.label}}</bigger> {{tile.label2}}<br><span ng-if="tile.type !== 4">{{tile.cost}} token<span ng-if="tile.cost > 1">s</span></span></b>
+                        </div>
+                        <div style="text-align: center" ng-if="tile.type == 4"><b>{{tile.cost}} tokens</b></div>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+        <div class="col-md-5 col-sm-5">
+
+            <div class="pull-right clearfix" style="text-align: center">
+                <h4>Tokens Remaining:</h4><div class="tokenbox pull-right">{{tokens}}</div>
+            </div>
+
+            <br>
+            <div class="clearfix"></div>
+
+            <h3>Round {{round}}</h3>
+            <hr>
+
+            Please click on the tile that you would like to buy.<br>
+            <small>(To review the meaning of each tile, please click <a ng-click="show_tiletypes()">here</a>)</small>
+            </p>
+
+            <div class="text-success">&nbsp;{{selectmessage}}</div>
+            <div class="text-danger">&nbsp;{{message}}</div>
+            <br>
+            <div ng-if="tokens > 0">
+                <button class="btn btn-info" ng-click="confirm(chosen_tile)">Confirm Tile Purchase</button>
+            </div>
+
+            <div ng-if="tokens == 0">
+                <button class="btn btn-warning" ng-click="confirm(null)">No Tokens, Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" ng-if="status=='passcode'">
+        <div class="col-md-6 col-md-offset-3">
+            <h4><b>Round {{round}} Secret Code</b></h4>
+            <br>
+            <b>On the next screen you will be shown your secret code for Round {{round}}.  You must correctly type your secret code <u>backwards</u> to unlock your points from this round.</b>
+            <br><br>
+            <button class="btn btn-info" ng-click="next()">Next</button>
+        </div>
+    </div>
+
+    <div class="row" ng-if="status=='passcode2'">
+        <div class="col-md-10 col-md-offset-1">
+            <h4><b>Round {{round}} Secret Code</b></h4>
+
+            Type your secret code <u><b>backwards</b></u> in the box below to unlock your points and advance to the next round.   <u>Make sure to type your secret code correctly and <b>double check your work</b> - you lose <b>5 points</b> for every error in your code</u>
+            <br><br>Your secret code for Round {{round}} is:<br>
+            <span class="text-success"><h4><b>{{codes[round]}}</b></h4></span>
+
+            <br><br>
+            Type your code <u><b>backwards</b></u> in the box below:
+            <div class="form-group">
+                <input type="text" class="form-control" placeholder="passcode" autocomplete="off" ng-model="passcode">
+            </div>
+
+            <div class="text-danger">{{pmessage}}</div>
+            <div style="text-align: center" class="btn-group">
+                <a class="btn btn-info" ng-class="{active: sub_asis}" ng-click="asis(passcode)">Submit</a>
+                <a class="btn btn-info" ng-class="{active: sub_free}" ng-show="free_corrector" ng-click="usefree(passcode)">Use your FREE "corrector" to correct 2 errors & submit</a>
+                <a class="btn btn-info" ng-class="{active: buycorr}" ng-hide="free_corrector" ng-click="buy_corrector(passcode)">Buy 1 "corrector" (cost: 1 token) to correct 2 mistakes & submit</a>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row" ng-if="status=='waiting'">
+        <div class="jumbotron">
+            <p style="text-align: center"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br>
+                Please wait while all players in your Cluster finish buying their tiles...</p>
+        </div>
+    </div>
+
+    <div class="row" ng-if="status=='waiting2'">
+        <div class="jumbotron">
+            <p style="text-align: center"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br>
+                Thank you for entering your code. You will see how you did at the end of the game.<br>
+                Round {{round}} will begin momentarily ...</p>
+        </div>
+    </div>
+
+    <!--<div class="row" ng-if="status=='gameover'">-->
+        <!--<div class="jumbotron">-->
+            <!--<p style="text-align: center">Accuracy report (this will be hidden and saved):-->
+            <!--<li ng-repeat="(round, score) in accuracy">{{round}} : {{score*100 | number : 2}}%</li></p>-->
+        <!--</div>-->
+    <!--</div>-->
+
+</div>
